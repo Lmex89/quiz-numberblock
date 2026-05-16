@@ -1,0 +1,10 @@
+{
+  "COUNT_MIN": 1,
+  "COUNT_MAX": 5,
+  "SUM_MIN_ITEMS": 2,
+  "SUM_MAX_ITEMS": 3,
+  "SUM_MIN_VALUE": 1,
+  "SUM_MAX_VALUE": 20,
+  "SUM_TOTAL_MAX": 33,
+  "TOTAL_IMAGES": 20
+}
