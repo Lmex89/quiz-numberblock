@@ -113,7 +113,7 @@ async function loadQuiz() {
       Audio.playClick();
       loading = true;
       disable();
-      verifyAnswer(answer, data.correct_answer, btn);
+      verifyAnswer(answer, data.correct_answer, data.correct_image_url, btn);
     });
   } catch (err) {
     $feedback.textContent = 'Error al cargar 😢';
@@ -123,7 +123,7 @@ async function loadQuiz() {
   }
 }
 
-async function verifyAnswer(answer, correctAnswer, btn) {
+async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
   try {
     const result = await API.verifyAnswer(GAME_TYPE, answer);
     $streak.textContent = result.streak;
@@ -133,8 +133,7 @@ async function verifyAnswer(answer, correctAnswer, btn) {
       $feedback.className = 'feedback ok';
       $feedback.innerHTML = '<span class="celebrate">🎉</span> ¡Correcto!';
 
-      const resultImg = API_BASE + '/static/images/' + correctAnswer + '.jpg';
-      showResultOverlay(resultImg, correctAnswer);
+      showResultOverlay(correctImageUrl, correctAnswer);
       Audio.playSumResult(correctAnswer);
 
       $body.className = 'success';

@@ -1,3 +1,4 @@
+import os
 import random
 from loguru import logger
 from config import get
@@ -11,12 +12,25 @@ SUM_MAX_VALUE = get("SUM_MAX_VALUE")
 SUM_TOTAL_MAX = get("SUM_TOTAL_MAX")
 TOTAL_IMAGES = get("TOTAL_IMAGES")
 
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "images")
+
+
+def _image_filename(num: int) -> str:
+    for ext in (".jpg", ".jpeg"):
+        if os.path.isfile(os.path.join(IMAGES_DIR, f"{num}{ext}")):
+            return f"{num}{ext}"
+    return f"{num}.jpg"
+
+
+def _image_url(num: int) -> str:
+    return f"/static/images/{_image_filename(num)}"
+
 
 def pick_random_images(count: int, max_value: int = TOTAL_IMAGES) -> list[dict]:
-    filenames = [str(random.randint(1, max_value)) for _ in range(count)]
+    nums = [random.randint(1, max_value) for _ in range(count)]
     images = [
-        {"filename": f"{f}.jpg", "value": int(f), "url": f"/static/images/{f}.jpg"}
-        for f in filenames
+        {"filename": _image_filename(n), "value": n, "url": _image_url(n)}
+        for n in nums
     ]
     logger.debug(f"Picked {len(images)} images with values: {[img['value'] for img in images]}")
     return images
@@ -95,6 +109,7 @@ def generate_sum_quiz() -> dict:
         "total_sum": total,
         "options": options,
         "correct_answer": total,
+        "correct_image_url": _image_url(total),
     }
     logger.info(f"Sum quiz generated: total={total}, num_items={num_items}, options={options}")
     return quiz

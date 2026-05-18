@@ -3,3 +3,4 @@ uvicorn==0.30.0
 python-multipart==0.0.12
 Pillow==11.0.0
 loguru==0.7.2
+cairosvg==2.7.1
