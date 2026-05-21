@@ -11,6 +11,9 @@ DEFAULTS = {
     "SUM_MIN_VALUE": 1,
     "SUM_MAX_VALUE": 20,
     "SUM_TOTAL_MAX": 32,
+    "SUM_BIG_THRESHOLD": 30,
+    "SUM_SMALL_MIN": 1,
+    "SUM_SMALL_MAX": 10,
     "TOTAL_IMAGES": 20,
 }
 

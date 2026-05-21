@@ -146,7 +146,7 @@ async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
       Audio.playWrong();
     }
 
-    setTimeout(loadQuiz, 1500);
+    setTimeout(loadQuiz, 1800);
   } catch (err) {
     $feedback.textContent = 'Error 😢';
     $feedback.className = 'feedback ko';

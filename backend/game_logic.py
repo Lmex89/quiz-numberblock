@@ -10,6 +10,9 @@ SUM_MAX_ITEMS = get("SUM_MAX_ITEMS")
 SUM_MIN_VALUE = get("SUM_MIN_VALUE")
 SUM_MAX_VALUE = get("SUM_MAX_VALUE")
 SUM_TOTAL_MAX = get("SUM_TOTAL_MAX")
+SUM_BIG_THRESHOLD = get("SUM_BIG_THRESHOLD")
+SUM_SMALL_MIN = get("SUM_SMALL_MIN")
+SUM_SMALL_MAX = get("SUM_SMALL_MAX")
 TOTAL_IMAGES = get("TOTAL_IMAGES")
 
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "images")
@@ -93,6 +96,15 @@ def generate_sum_quiz() -> dict:
         total = sum(img["value"] for img in images)
         if total <= SUM_TOTAL_MAX:
             break
+
+    if num_items == 2:
+        v0, v1 = images[0]["value"], images[1]["value"]
+        if v0 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v1 <= SUM_SMALL_MAX):
+            images[1] = pick_random_images(1, SUM_SMALL_MAX)[0]
+            total = images[0]["value"] + images[1]["value"]
+        elif v1 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v0 <= SUM_SMALL_MAX):
+            images[0] = pick_random_images(1, SUM_SMALL_MAX)[0]
+            total = images[0]["value"] + images[1]["value"]
 
     sum_min = SUM_MIN_ITEMS * SUM_MIN_VALUE
     sum_max = SUM_TOTAL_MAX

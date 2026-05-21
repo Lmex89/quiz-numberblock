@@ -76,33 +76,55 @@ const Audio = (() => {
   const PENT = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
 
   // ── Background music loop ────────────────
-  // Plays a gentle bouncy pattern, loops every ~4s
+  // Original kids' game tune — catchy call-and-response, loops every ~4.8s
 
   function scheduleLoop() {
     const c = getCtx();
     const now = c.currentTime;
-    const beat = 0.35;
+    const beat = 0.3;
 
-    for (let bar = 0; bar < 4; bar++) {
-      const t = now + bar * beat;
-
-      pluck(PENT[0], t, beat * 0.5, 0.06);
-      pizzBass(PENT[0] / 2, t + 0.02, beat * 0.6);
-
-      if (bar === 1) {
-        glock(PENT[2], t + 0.05, beat * 0.4, 0.04);
-        glock(PENT[4], t + beat * 0.3, beat * 0.4, 0.04);
-      }
-      if (bar === 3) {
-        glock(PENT[4], t + 0.03, beat * 0.5, 0.05);
-        woodblock(t);
+    // Melody (glock) — pentatonic indices
+    const melody = [5, 3, 5, 6, 5, 4, 3, 2, 3, 5, 6, 7, 6, 5, 3, 5];
+    for (let i = 0; i < melody.length; i++) {
+      const t = now + i * beat;
+      const len = beat * 0.35;
+      glock(PENT[melody[i]], t, len, 0.07);
+      // harmony third above on every other note
+      if (i % 2 === 0 && melody[i] + 2 < PENT.length) {
+        glock(PENT[melody[i] + 2], t, len, 0.025);
       }
     }
 
-    softPad(PENT[0] / 2, now, beat * 4);
-    softPad(PENT[2] / 2, now, beat * 4);
+    // Pluck response — fills the gaps
+    for (let i = 0; i < 8; i++) {
+      const t = now + i * beat * 2 + beat * 0.5;
+      pluck(PENT[melody[i * 2]] / 2, t, beat * 0.4, 0.04);
+    }
 
-    if (musicPlaying) musicTimer = setTimeout(scheduleLoop, beat * 4 * 1000 - 50);
+    // Bass — moves with harmony
+    const bassNotes = [0, 3, 4, 3];
+    for (let i = 0; i < bassNotes.length; i++) {
+      pizzBass(PENT[bassNotes[i]] / 2, now + i * beat * 4, beat * 3.5);
+    }
+
+    // Percussion — bouncy pattern
+    for (let i = 0; i < 16; i++) {
+      if (i % 4 === 0 || i % 4 === 2) {
+        woodblock(now + i * beat);
+      }
+      if (i % 8 === 0) {
+        const t2 = now + i * beat;
+        glock(PENT[0] * 4, t2, 0.03, 0.02);
+      }
+    }
+
+    // Sustained pad
+    softPad(PENT[0] / 2, now, beat * 8);
+    softPad(PENT[2] / 2, now, beat * 8);
+    softPad(PENT[4] / 2, now + beat * 8, beat * 8);
+
+    const loopMs = melody.length * beat * 1000 - 50;
+    if (musicPlaying) musicTimer = setTimeout(scheduleLoop, loopMs);
   }
 
   function startMusic() {

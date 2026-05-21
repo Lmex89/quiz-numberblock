@@ -30,6 +30,10 @@ if not test -f static/images/1.jpg
     python3 static/images/generate_placeholders.py
 end
 
+# 2b. Convert WebP/PNG/SVG images to JPG
+echo "→ Converting image files to JPG..."
+python3 static/images/convert_webp_to_jpg.py
+
 # 3. Symlink static/ inside frontend/ for image serving on port 9093
 if not test -L frontend/static
     echo "→ Linking static/ into frontend/..."
