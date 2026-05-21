@@ -1,5 +1,7 @@
 const GAME_TYPE = 'count';
 let loading = false;
+const SCORE_STORAGE_TTL_MS = 10 * 60 * 1000;
+const SCORE_STORAGE_KEY = `quiz_score_cache_${GAME_TYPE}`;
 
 const $grid = document.getElementById('imageGrid');
 const $question = document.getElementById('question');
@@ -7,6 +9,38 @@ const $options = document.getElementById('options');
 const $feedback = document.getElementById('feedback');
 const $streak = document.getElementById('streakNum');
 const $body = document.body;
+
+function loadStoredStreak() {
+  try {
+    const raw = localStorage.getItem(SCORE_STORAGE_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.streak !== 'number' || typeof parsed.expiresAt !== 'number') {
+      localStorage.removeItem(SCORE_STORAGE_KEY);
+      return 0;
+    }
+    if (Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(SCORE_STORAGE_KEY);
+      return 0;
+    }
+    return parsed.streak;
+  } catch {
+    return 0;
+  }
+}
+
+function persistStreak(streak) {
+  try {
+    localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
+      streak,
+      expiresAt: Date.now() + SCORE_STORAGE_TTL_MS,
+    }));
+  } catch {
+    // no-op when storage is unavailable
+  }
+}
+
+$streak.textContent = loadStoredStreak();
 
 function scatter(els) {
   els.forEach((el, i) => {
@@ -122,6 +156,7 @@ async function verifyAnswer(answer, correctAnswer, btn) {
   try {
     const result = await API.verifyAnswer(GAME_TYPE, answer);
     $streak.textContent = result.streak;
+    persistStreak(result.streak);
     reveal(correctAnswer, result.correct ? null : btn);
 
     if (result.correct) {
