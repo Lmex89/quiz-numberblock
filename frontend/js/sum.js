@@ -79,7 +79,14 @@ function renderImages(images) {
 
 function renderOptions(options, correctAnswer, onClick) {
   $options.innerHTML = options
-    .map(v => `<button class="opt" data-val="${v}">${v}</button>`)
+    .map(v => {
+      const imgUrl = `/static/images/${v}.jpg`;
+      return `<button class="opt" data-val="${v}">
+        <img src="${imgUrl}" alt="${v}" loading="lazy" class="opt-img"
+             onerror="this.style.display='none'">
+        <span class="opt-num">${v}</span>
+      </button>`;
+    })
     .join('');
   $options.querySelectorAll('.opt').forEach(b => {
     b.addEventListener('click', () => {
@@ -147,7 +154,7 @@ async function loadQuiz() {
       Audio.playClick();
       loading = true;
       disable();
-      verifyAnswer(answer, data.correct_answer, data.correct_image_url, btn);
+      verifyAnswer(answer, data.correct_answer, data.images, btn);
     });
   } catch (err) {
     $feedback.textContent = 'Error al cargar 😢';
@@ -157,7 +164,7 @@ async function loadQuiz() {
   }
 }
 
-async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
+async function verifyAnswer(answer, correctAnswer, images, btn) {
   try {
     const result = await API.verifyAnswer(GAME_TYPE, answer);
     $streak.textContent = result.streak;
@@ -168,12 +175,11 @@ async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
       $feedback.className = 'feedback ok';
       $feedback.innerHTML = '<span class="celebrate">🎉</span> ¡Correcto!';
 
-      showResultOverlay(correctImageUrl, correctAnswer);
-      Audio.playSumResult(correctAnswer);
+      showResultOverlay(images, correctAnswer);
 
       $body.className = 'success';
-      confetti();
       Audio.playCorrect();
+      setTimeout(confetti, 1000);
     } else {
       $feedback.className = 'feedback ko';
       $feedback.innerHTML = '😅 ¡Sigue intentando!';
@@ -181,7 +187,7 @@ async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
       Audio.playWrong();
     }
 
-    setTimeout(loadQuiz, 1800);
+    setTimeout(loadQuiz, 3000);
   } catch (err) {
     $feedback.textContent = 'Error 😢';
     $feedback.className = 'feedback ko';
@@ -189,19 +195,57 @@ async function verifyAnswer(answer, correctAnswer, correctImageUrl, btn) {
   }
 }
 
-function showResultOverlay(src, label) {
-  const existing = document.querySelector('.result-overlay');
+function showResultOverlay(images, total) {
+  const existing = document.querySelector('.clash-overlay');
   if (existing) existing.remove();
 
+  const mid = Math.ceil(images.length / 2);
+  const leftImages = images.slice(0, mid);
+  const rightImages = images.slice(mid);
+
+  function buildGroup(arr) {
+    return arr.map((img, i) =>
+      `<img src="${img.url}" alt="${img.value}" class="cimg" onerror="this.style.display='none'">` +
+      (i < arr.length - 1 ? '<span class="cop">+</span>' : '')
+    ).join('');
+  }
+
+  const haveRight = rightImages.length > 0;
+  const centerOp = haveRight ? '<span class="cop center-op">+</span>' : '';
+
+  const icons = ['✦','✧','⭐','✨','💥','⚡','🔸','🔹','🌟','💫'];
+  let stars = '';
+  for (let i = 0; i < 16; i++) {
+    const icon = icons[Math.floor(Math.random() * icons.length)];
+    const angle = Math.random() * 360;
+    const dist = 60 + Math.random() * 140;
+    const rad = angle * Math.PI / 180;
+    stars += `<span class="istar" style="--tx:${Math.cos(rad) * dist}px;--ty:${Math.sin(rad) * dist}px;font-size:${14 + Math.random() * 18}px;animation-delay:${0.6 + Math.random() * 0.19}s;animation-duration:${0.63 + Math.random() * 0.38}s">${icon}</span>`;
+  }
+
   const overlay = document.createElement('div');
-  overlay.className = 'result-overlay';
+  overlay.className = 'clash-overlay';
   overlay.innerHTML = `
-    <div class="result-overlay-inner">
-      <img src="${src}" alt="${label}" onerror="this.style.display='none'" class="result-overlay-img">
-      <span class="result-overlay-label">${label}</span>
+    <div class="clash-inner">
+      <div class="cside cside-left">${buildGroup(leftImages)}</div>
+      ${centerOp}
+      ${haveRight ? `<div class="cside cside-right">${buildGroup(rightImages)}</div>` : ''}
+      <div class="iring"></div>
+      <div class="iflash"></div>
+      <div class="istars">${stars}</div>
+      <div class="cresult">
+        <img src="/static/images/${total}.jpg" alt="${total}" class="cresult-img" onerror="this.style.display='none'">
+        <span class="cresult-label">${total}</span>
+      </div>
     </div>`;
   document.body.appendChild(overlay);
-  setTimeout(() => overlay.remove(), 1300);
+
+  setTimeout(() => Audio.playSumResult(total), 1000);
+
+  setTimeout(() => {
+    overlay.classList.add('out');
+    setTimeout(() => overlay.remove(), 250);
+  }, 2500);
 }
 
 loadQuiz();

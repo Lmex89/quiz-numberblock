@@ -74,7 +74,14 @@ function renderImages(images) {
 
 function renderOptions(options, correctAnswer, onClick) {
   $options.innerHTML = options
-    .map(v => `<button class="opt" data-val="${v}">${v}</button>`)
+    .map(v => {
+      const imgUrl = `/static/images/${v}.jpg`;
+      return `<button class="opt" data-val="${v}">
+        <img src="${imgUrl}" alt="${v}" loading="lazy" class="opt-img"
+             onerror="this.style.display='none'">
+        <span class="opt-num">${v}</span>
+      </button>`;
+    })
     .join('');
   $options.querySelectorAll('.opt').forEach(b => {
     b.addEventListener('click', () => {
