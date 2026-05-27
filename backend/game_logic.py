@@ -155,3 +155,39 @@ def generate_sum_quiz() -> dict:
     }
     logger.info(f"Sum quiz generated: total={total}, num_items={num_items}, options={options}, values={[img['value'] for img in images]}")
     return quiz
+
+
+def generate_repeated_sum_quiz() -> dict:
+    base = random.randint(1, 10)
+    repeats = random.randint(2, 8)
+    total = base * repeats
+    logger.debug(f"Generating repeated sum quiz: base={base}, repeats={repeats}, total={total}")
+
+    images = [
+        {"filename": _image_filename(base), "value": base, "url": _image_url(base)}
+        for _ in range(repeats)
+    ]
+
+    sum_min = repeats * 1
+    sum_max = min(10 * 8, SUM_TOTAL_MAX)
+    distractor_min = max(sum_min, total - 10)
+    distractor_max = min(sum_max, total + 10)
+    logger.debug(f"Repeated sum distractor range: min={distractor_min}, max={distractor_max}")
+    distractors = _generate_sum_distractors(total, distractor_min, distractor_max)
+
+    options = [total] + distractors
+    random.shuffle(options)
+
+    quiz = {
+        "game_type": "sum",
+        "images": images,
+        "total_sum": total,
+        "options": options,
+        "correct_answer": total,
+        "correct_image_url": _image_url(total),
+        "boss_active": True,
+        "base_value": base,
+        "repeats": repeats,
+    }
+    logger.info(f"Repeated sum quiz generated: {base} x {repeats} = {total}, options={options}")
+    return quiz

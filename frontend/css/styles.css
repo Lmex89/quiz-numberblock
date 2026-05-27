@@ -79,6 +79,16 @@ body.error { background: #FDE8E8; }
 body.error::before { background: var(--red); }
 body.error::after { background: #FF9999; }
 
+body.boss-mode { background: #E8DCC8; }
+body.boss-mode::before { background: var(--orange); opacity: .12; }
+body.boss-mode::after { background: var(--brown); opacity: .06; }
+body.boss-mode .container {
+  box-shadow:
+    0 4px 16px var(--shadow),
+    0 12px 48px var(--shadow-s),
+    inset 0 0 0 3px var(--orange);
+}
+
 /* ── Container ─────────────────────────── */
 .container {
   position: relative;

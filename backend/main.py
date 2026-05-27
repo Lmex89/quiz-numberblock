@@ -12,7 +12,7 @@ import os
 import traceback
 
 from session_manager import sessions
-from game_logic import generate_count_quiz, generate_sum_quiz
+from game_logic import generate_count_quiz, generate_sum_quiz, generate_repeated_sum_quiz
 
 logger.info("Starting quiz app backend")
 logger.debug(f"Python version: {sys.version}")
@@ -125,7 +125,16 @@ def api_quiz_sum(request: Request, response: Response):
     sid = _resolve_session(request, response)
     logger.info(f"Generating sum quiz for session {sid[:8]}...")
     try:
-        quiz = generate_sum_quiz()
+        session = sessions[sid]
+        streak = session.get("streak_sum", 0)
+        milestone = session.setdefault("boss_milestone", -1)
+        if streak > 0 and streak % 10 == 0 and streak != milestone:
+            quiz = generate_repeated_sum_quiz()
+            session["last_boss_active"] = True
+            logger.info(f"Boss quiz triggered at streak={streak}")
+        else:
+            quiz = generate_sum_quiz()
+            session["last_boss_active"] = False
     except Exception as e:
         logger.error(f"Failed to generate sum quiz: {e}\n{traceback.format_exc()}")
         return JSONResponse(status_code=500, content={"error": "failed to generate sum quiz"})
@@ -174,25 +183,42 @@ def api_verify(body: VerifyRequest, request: Request, response: Response):
     fail_key = f"fail_count_{body.game_type}"
     session.setdefault(streak_key, 0)
     session.setdefault(fail_key, 0)
+    session.setdefault("boss_milestone", -1)
+
+    is_boss = session.get("last_boss_active", False)
+
     if correct:
-        session[streak_key] += 1
+        if is_boss:
+            session[streak_key] += 2
+            session["boss_milestone"] = session[streak_key] - 2
+            session["last_boss_active"] = False
+            logger.info(f"Boss answer correct! streak jumped to {session[streak_key]}")
+        else:
+            session[streak_key] += 1
         session[fail_key] = 0
         logger.debug(f"Answer correct, streak={session[streak_key]}")
     else:
         session[fail_key] += 1
         logger.debug(f"Answer incorrect, fail_count={session[fail_key]}")
+        if is_boss:
+            session["boss_milestone"] = session[streak_key]
+            session["last_boss_active"] = False
+            logger.info(f"Boss answer wrong, boss milestone set, returning to normal")
         if session[fail_key] >= 3:
             session[streak_key] = 0
             session[fail_key] = 0
-            logger.info(f"3 consecutive failures, streak reset for session {sid[:8]}...")
+            session["boss_milestone"] = -1
+            logger.info(f"3 consecutive failures, streak and boss reset for session {sid[:8]}...")
 
     msg = "¡Correcto!" if correct else f"Incorrecto. La respuesta era {stored_correct}"
     if correct and session[streak_key] > 1:
         msg += f" Racha: {session[streak_key]}"
+    if correct and is_boss:
+        msg = "🎉 ¡Reto superado! +2 estrellas"
 
     logger.info(
         f"Verify {body.game_type}: answer={body.answer}, correct={correct}, "
-        f"correct_answer={stored_correct}, streak={session[streak_key]}, "
+        f"boss={is_boss}, correct_answer={stored_correct}, streak={session[streak_key]}, "
         f"fails={session[fail_key]}, session={sid[:8]}..."
     )
 
@@ -202,4 +228,5 @@ def api_verify(body: VerifyRequest, request: Request, response: Response):
         "correct_answer": stored_correct,
         "streak": session[streak_key],
         "message": msg,
+        "boss_active": is_boss,
     }

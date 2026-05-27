@@ -147,7 +147,13 @@ async function loadQuiz() {
   try {
     const data = await API.getQuiz(GAME_TYPE);
     renderImages(data.images);
-    $question.textContent = '¿Cuánto suman todas las imágenes?';
+    if (data.boss_active) {
+      $question.textContent = `🔥 ¡Reto! ¿Cuánto es ${data.base_value} repetido ${data.repeats} veces?`;
+      $body.classList.add('boss-mode');
+    } else {
+      $question.textContent = '¿Cuánto suman todas las imágenes?';
+      $body.classList.remove('boss-mode');
+    }
 
     renderOptions(data.options, data.correct_answer, (answer, btn) => {
       if (loading) return;
