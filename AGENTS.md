@@ -29,7 +29,7 @@ Or use `fish start.fish` to do all of the above automatically.
 | `backend/session_manager.py` | In-memory per-browser session store |
 | `backend/config.py` | Loads `config.json` with defaults |
 | `config.json` | Game tuning knobs (count/sum ranges, TOTAL_IMAGES) |
-| `frontend/` | `index.html`, `count.html`, `sum.html`, `css/styles.css` |
+| `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js`, `sum.js` |
 | `static/images/` | `1.jpg`/`.jpeg`–`32.jpg`/`.jpeg` (filename = value for sum game) |
 

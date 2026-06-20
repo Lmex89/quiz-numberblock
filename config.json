@@ -1,13 +1,22 @@
 {
-  "COUNT_MIN": 1,
-  "COUNT_MAX": 5,
+  "_docs": {
+    "SUM_MIN_ITEMS": "Mínimo de imágenes en la suma (siempre 2 por ahora)",
+    "SUM_MAX_ITEMS": "Máximo de imágenes en la suma (siempre 2 por ahora)",
+    "SUM_MIN_VALUE": "Valor mínimo de cada imagen individual",
+    "SUM_MAX_VALUE": "Valor máximo de cada imagen individual (y tope para small_max progresivo)",
+    "SUM_TOTAL_MAX": "Suma total máxima permitida (las imágenes se repiten hasta que cumpla)",
+    "SUM_BIG_THRESHOLD": "Si un sumando supera este valor, el otro se fuerza al rango small_min..small_max",
+    "SUM_SMALL_MIN": "Límite inferior del rango 'pequeño' para el segundo sumando",
+    "SUM_SMALL_MAX": "Límite superior base del rango 'pequeño' (aumenta con la racha >20)",
+    "TOTAL_IMAGES": "Cantidad total de imágenes disponibles (1.jpg a N.jpg)"
+  },
   "SUM_MIN_ITEMS": 2,
   "SUM_MAX_ITEMS": 2,
   "SUM_MIN_VALUE": 1,
-  "SUM_MAX_VALUE": 150,
-  "SUM_TOTAL_MAX": 150,
+  "SUM_MAX_VALUE": 280,
+  "SUM_TOTAL_MAX": 280,
   "SUM_BIG_THRESHOLD": 15,
   "SUM_SMALL_MIN": 1,
   "SUM_SMALL_MAX": 10,
-  "TOTAL_IMAGES": 150
+  "TOTAL_IMAGES": 280
 }

@@ -12,7 +12,8 @@ import os
 import traceback
 
 from session_manager import sessions
-from game_logic import generate_count_quiz, generate_sum_quiz, generate_repeated_sum_quiz
+from config import get as config_get
+from game_logic import generate_gallery_page, generate_sum_quiz, generate_repeated_sum_quiz
 
 logger.info("Starting quiz app backend")
 logger.debug(f"Python version: {sys.version}")
@@ -53,13 +54,13 @@ def serve_home():
     return FileResponse(path)
 
 
-@app.get("/count.html")
-def serve_count():
-    path = os.path.join(FRONTEND_DIR, "count.html")
-    logger.debug(f"Serving count page: {path}")
+@app.get("/galeria.html")
+def serve_galeria():
+    path = os.path.join(FRONTEND_DIR, "galeria.html")
+    logger.debug(f"Serving galeria page: {path}")
     if not os.path.isfile(path):
-        logger.error(f"Count page not found: {path}")
-        return JSONResponse(status_code=404, content={"error": "count page not found"})
+        logger.error(f"Galeria page not found: {path}")
+        return JSONResponse(status_code=404, content={"error": "galeria page not found"})
     return FileResponse(path)
 
 
@@ -106,18 +107,12 @@ def _resolve_session(request: Request, response: Response) -> str:
     return new_sid
 
 
-@app.get("/api/quiz/count")
-def api_quiz_count(request: Request, response: Response):
-    sid = _resolve_session(request, response)
-    logger.info(f"Generating count quiz for session {sid[:8]}...")
-    try:
-        quiz = generate_count_quiz()
-    except Exception as e:
-        logger.error(f"Failed to generate count quiz: {e}\n{traceback.format_exc()}")
-        return JSONResponse(status_code=500, content={"error": "failed to generate count quiz"})
-    sessions[sid]["last_quiz"] = quiz
-    logger.info(f"Count quiz served: quantity={quiz['quantity']}, correct={quiz['correct_answer']}, options={quiz['options']}")
-    return {"session_id": sid, **quiz}
+@app.get("/api/gallery")
+def api_gallery(page: int = 1, per_page: int = 50):
+    logger.debug(f"Gallery request: page={page}, per_page={per_page}")
+    data = generate_gallery_page(page, per_page)
+    logger.debug(f"Gallery response: page={data['page']}/{data['total_pages']}, images={len(data['images'])}")
+    return data
 
 
 @app.get("/api/quiz/sum")
@@ -133,7 +128,7 @@ def api_quiz_sum(request: Request, response: Response):
             session["last_boss_active"] = True
             logger.info(f"Boss quiz triggered at streak={streak}")
         else:
-            quiz = generate_sum_quiz()
+            quiz = generate_sum_quiz(streak=streak)
             session["last_boss_active"] = False
     except Exception as e:
         logger.error(f"Failed to generate sum quiz: {e}\n{traceback.format_exc()}")

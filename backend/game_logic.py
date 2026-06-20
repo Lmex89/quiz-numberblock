@@ -3,8 +3,6 @@ import random
 from loguru import logger
 from config import get
 
-COUNT_MIN = get("COUNT_MIN")
-COUNT_MAX = get("COUNT_MAX")
 SUM_MIN_ITEMS = get("SUM_MIN_ITEMS")
 SUM_MAX_ITEMS = get("SUM_MAX_ITEMS")
 SUM_MIN_VALUE = get("SUM_MIN_VALUE")
@@ -32,6 +30,28 @@ def _image_url(num: int) -> str:
     return f"/static/images/{_image_filename(num)}"
 
 
+def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
+    total = TOTAL_IMAGES
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, total_pages))
+    start_val = (page - 1) * per_page + 1
+    end_val = min(start_val + per_page - 1, total)
+    images = []
+    for v in range(start_val, end_val + 1):
+        images.append({
+            "value": v,
+            "filename": _image_filename(v),
+            "url": _image_url(v),
+        })
+    return {
+        "images": images,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": total_pages,
+    }
+
+
 def pick_random_images(count: int, max_value: int = TOTAL_IMAGES) -> list[dict]:
     nums = [random.randint(1, max_value) for _ in range(count)]
     images = [
@@ -40,16 +60,6 @@ def pick_random_images(count: int, max_value: int = TOTAL_IMAGES) -> list[dict]:
     ]
     logger.debug(f"Picked {len(images)} images with values: {[img['value'] for img in images]}")
     return images
-
-
-def _generate_count_distractors(correct: int) -> list[int]:
-    possible = [i for i in range(COUNT_MIN, COUNT_MAX + 1) if i != correct]
-    if len(possible) <= 2:
-        logger.debug(f"Count distractors (exhaustive): {possible}")
-        return possible
-    result = random.sample(possible, 2)
-    logger.debug(f"Count distractors: {result}")
-    return result
 
 
 def _generate_sum_distractors(correct: int, min_val: int, max_val: int, count: int = 2) -> list[int]:
@@ -78,32 +88,7 @@ def _generate_sum_distractors(correct: int, min_val: int, max_val: int, count: i
     return result
 
 
-def generate_count_quiz() -> dict:
-    quantity = random.randint(COUNT_MIN, COUNT_MAX)
-    logger.debug(f"Generating count quiz: quantity range=[{COUNT_MIN},{COUNT_MAX}], selected={quantity}")
-    images = pick_random_images(quantity)
-
-    correct_value = quantity
-    distractors = _generate_count_distractors(correct_value)
-    logger.debug(f"Count distractors for correct_value={correct_value}: {distractors}")
-
-    options = [correct_value] + distractors
-    random.shuffle(options)
-    logger.debug(f"Count options: {options}")
-
-    quiz = {
-        "game_type": "count",
-        "quantity": quantity,
-        "images": images,
-        "options": options,
-        "correct_answer": correct_value,
-    }
-    logger.info(f"Count quiz generated: quantity={quantity}, options={options}, correct={correct_value}")
-    return quiz
-
-
-
-def generate_sum_quiz() -> dict:
+def generate_sum_quiz(streak: int = 0) -> dict:
     for attempt in range(50):
         num_items = random.randint(SUM_MIN_ITEMS, SUM_MAX_ITEMS)
         images = pick_random_images(num_items, SUM_MAX_VALUE)
@@ -117,15 +102,19 @@ def generate_sum_quiz() -> dict:
 
     if num_items == 2:
         v0, v1 = images[0]["value"], images[1]["value"]
-        logger.debug(f"Checking big/small logic: v0={v0}, v1={v1}, threshold={SUM_BIG_THRESHOLD}, small_range=[{SUM_SMALL_MIN},{SUM_SMALL_MAX}]")
-        if v0 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v1 <= SUM_SMALL_MAX):
+        if streak > 20:
+            small_max = min(10 + 2 * ((streak - 10) // 10) + 1, SUM_MAX_VALUE)
+        else:
+            small_max = SUM_SMALL_MAX
+        logger.debug(f"Checking big/small logic: v0={v0}, v1={v1}, threshold={SUM_BIG_THRESHOLD}, small_range=[{SUM_SMALL_MIN},{small_max}] (streak={streak})")
+        if v0 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v1 <= small_max):
             logger.info(f"v0={v0} is big and v1={v1} is not small, replacing v1")
-            images[1] = pick_random_images(1, SUM_SMALL_MAX)[0]
+            images[1] = pick_random_images(1, small_max)[0]
             total = images[0]["value"] + images[1]["value"]
             logger.debug(f"After replacement: values=[{images[0]['value']}, {images[1]['value']}], total={total}")
-        elif v1 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v0 <= SUM_SMALL_MAX):
+        elif v1 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v0 <= small_max):
             logger.info(f"v1={v1} is big and v0={v0} is not small, replacing v0")
-            images[0] = pick_random_images(1, SUM_SMALL_MAX)[0]
+            images[0] = pick_random_images(1, small_max)[0]
             total = images[0]["value"] + images[1]["value"]
             logger.debug(f"After replacement: values=[{images[0]['value']}, {images[1]['value']}], total={total}")
         else:

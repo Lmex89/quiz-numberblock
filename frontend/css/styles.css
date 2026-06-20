@@ -185,7 +185,8 @@ body.boss-mode .container {
 .image-grid img {
   width: var(--img-size, clamp(70px,20vw,110px));
   height: var(--img-size, clamp(70px,20vw,110px));
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   border-radius: var(--r);
   box-shadow:
     0 4px 12px var(--shadow-s),
@@ -305,7 +306,8 @@ body.boss-mode .container {
 .opt .opt-img {
   width: clamp(44px,13.2vw,62px);
   height: clamp(44px,13.2vw,62px);
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   border-radius: var(--r-sm);
   box-shadow: 0 2px 8px var(--shadow-s);
 }
@@ -381,7 +383,8 @@ body.boss-mode .container {
   width: 60px;
   height: 60px;
   border-radius: var(--r-sm);
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   box-shadow: 0 4px 12px var(--shadow-s);
 }
 .feedback .result-label {
@@ -465,7 +468,8 @@ body.boss-mode .container {
 .cimg {
   width: clamp(70px,20vw,110px);
   height: clamp(70px,20vw,110px);
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   border-radius: var(--r);
   box-shadow: 0 4px 16px rgba(0,0,0,.2);
   border: 3px solid var(--surface);
@@ -560,7 +564,8 @@ body.boss-mode .container {
 .cresult-img {
   width: clamp(138.6px,40.48vw,214.5px);
   height: clamp(138.6px,40.48vw,214.5px);
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   border-radius: var(--r-lg);
   box-shadow:
     0 10px 38px rgba(0,0,0,.28),
@@ -833,7 +838,8 @@ body.boss-mode .container {
 .gallery-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   display: block;
   transition: transform .3s ease;
 }
@@ -991,7 +997,8 @@ body.boss-mode .container {
 .lightbox-img {
   width: clamp(220px,65vw,420px);
   height: clamp(220px,65vw,420px);
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--bg);
   border-radius: var(--r-lg);
   box-shadow: 0 12px 48px rgba(0,0,0,.4);
   border: 5px solid var(--surface);
@@ -1038,5 +1045,51 @@ body.boss-mode .container {
 @media (hover: hover) {
   .lightbox-close:hover {
     transform: scale(1.12);
+  }
+}
+
+/* ── Lightbox navigation ──────────────── */
+.lightbox-view {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  color: var(--brown);
+  font-size: 1.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s, background .15s;
+  line-height: 1;
+  padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lightbox-prev { left: 10px; }
+.lightbox-next { right: 10px; }
+
+.lightbox-nav:active {
+  transform: translateY(-50%) scale(.88);
+}
+
+@media (hover: hover) {
+  .lightbox-nav:hover {
+    background: #fff;
+    transform: translateY(-50%) scale(1.1);
   }
 }

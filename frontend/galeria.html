@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galería de números</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="header-title">🖼️ ¡Mira los números!</span>
+      <span class="page-indicator" id="pageIndicator">Página 1 de 4</span>
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid"></div>
+
+    <div class="pagination" id="pagination">
+      <button class="page-btn" id="prevBtn" disabled><span class="btn-icon">⬅️</span></button>
+      <span class="page-info" id="pageInfo">1 / 4</span>
+      <button class="page-btn" id="nextBtn"><span class="btn-icon">➡️</span></button>
+    </div>
+
+    <a href="/" class="back"><span class="btn-icon">⬅️</span> Volver</a>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" id="lightboxClose">✕</button>
+      <div class="lightbox-view">
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">‹</button>
+        <img class="lightbox-img" id="lightboxImg" alt="">
+        <button class="lightbox-nav lightbox-next" id="lightboxNext">›</button>
+      </div>
+      <span class="lightbox-num" id="lightboxNum"></span>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/count.js"></script>
+</body>
+</html>
