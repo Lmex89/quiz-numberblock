@@ -4,6 +4,10 @@
 
 Educational quiz web app (Spanish) for children: count objects or sum their values. FastAPI backend + vanilla JS frontend. No build step, no test/lint/typecheck.
 
+## AGENTS.md updates (MANDATORY)
+
+This file must be updated on every change that affects project structure, setup, configuration, dependencies, conventions, or any other information documented here. Keeping it accurate is required for the AI to work correctly.
+
 ## Run (two terminals)
 
 ```bash
@@ -40,3 +44,10 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"count"`, `"sum"`).
 - **No tests, no CI, no formatter** — none configured. Logging via `loguru` (stderr, DEBUG+).
+
+## Commit best practices (MANDATORY)
+
+- **Atomic commits**: each commit is a single logical change. If a description gets long, split the commit.
+- **Subject line**: max 50 chars, imperative mood (`"add foo"` not `"added foo"`), no trailing period. Prefix with area: e.g. `backend:`, `frontend:`, `config:`, `images:`.
+- **Body** (optional): blank line after subject, then explain *why* the change was made, not *what* (the diff shows what).
+- **Multiple areas**: if changes span unrelated areas, commit them separately.
