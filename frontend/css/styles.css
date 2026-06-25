@@ -1060,16 +1060,16 @@ body.boss-mode .container {
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: none;
   border-radius: 50%;
-  background: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.92);
   color: var(--brown);
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 3px 12px rgba(0,0,0,.18);
+  box-shadow: 0 3px 14px rgba(0,0,0,.22);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1078,6 +1078,7 @@ body.boss-mode .container {
   padding: 0;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lightbox-prev { left: 10px; }
@@ -1092,4 +1093,16 @@ body.boss-mode .container {
     background: #fff;
     transform: translateY(-50%) scale(1.1);
   }
+}
+
+@media (max-width: 480px) {
+  .lightbox-nav {
+    width: 56px;
+    height: 56px;
+    font-size: 2rem;
+    background: rgba(255,255,255,.95);
+    box-shadow: 0 4px 16px rgba(0,0,0,.28);
+  }
+  .lightbox-prev { left: 6px; }
+  .lightbox-next { right: 6px; }
 }

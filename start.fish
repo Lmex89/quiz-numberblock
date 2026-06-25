@@ -21,8 +21,11 @@ if not test -d venv
     echo "→ Creating venv..."
     python3 -m venv venv
 end
+echo "→ Activating venv..."
+source venv/bin/activate.fish
+
 echo "→ Installing backend deps..."
-venv/bin/pip install -q -r backend/requirements.txt 2>&1 | grep -v "already satisfied"
+pip install -q -r backend/requirements.txt 2>&1 | grep -v "already satisfied"
 
 # 2. Generate placeholders if missing
 if not test -f static/images/1.jpg
@@ -51,7 +54,7 @@ echo "━━━ Starting servers ━━━"
 
 # Backend (port 8000, 0.0.0.0 for network access)
 set backend_log /tmp/backend-8000.log
-venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info > $backend_log 2>&1 &
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --log-level info > $backend_log 2>&1 &
 set backend_pid $last_pid
 echo "→ Backend (PID $backend_pid) → http://$LOCAL_IP:8000"
 
