@@ -30,19 +30,39 @@ def _image_url(num: int) -> str:
     return f"/static/images/{_image_filename(num)}"
 
 
+def _image_exists(num: int) -> bool:
+    for ext in (".jpg", ".jpeg"):
+        if os.path.isfile(os.path.join(IMAGES_DIR, f"{num}{ext}")):
+            return True
+    return False
+
+
 def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
-    total = TOTAL_IMAGES
+    continuous_max = get("GALLERY_CONTINUOUS_MAX")
+    extras = get("GALLERY_EXTRAS")
+
+    numbers = set(range(1, continuous_max + 1))
+    for num in extras:
+        if _image_exists(num):
+            numbers.add(num)
+
+    sorted_numbers = sorted(numbers)
+    total = len(sorted_numbers)
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
-    start_val = (page - 1) * per_page + 1
-    end_val = min(start_val + per_page - 1, total)
+
+    start_idx = (page - 1) * per_page
+    end_idx = min(start_idx + per_page, total)
+    page_numbers = sorted_numbers[start_idx:end_idx]
+
     images = []
-    for v in range(start_val, end_val + 1):
+    for v in page_numbers:
         images.append({
             "value": v,
             "filename": _image_filename(v),
             "url": _image_url(v),
         })
+
     return {
         "images": images,
         "page": page,

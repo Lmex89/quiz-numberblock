@@ -16,6 +16,8 @@ DEFAULTS = {
     "SUM_SMALL_MIN": 1,
     "SUM_SMALL_MAX": 10,
     "TOTAL_IMAGES": 20,
+    "GALLERY_CONTINUOUS_MAX": 20,
+    "GALLERY_EXTRAS": [],
 }
 
 _config = None
