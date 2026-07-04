@@ -46,9 +46,10 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"count"`, `"sum"`).
 - **No tests, no CI, no formatter** — none configured. Logging via `loguru` (stderr, DEBUG+).
 
-## Commit best practices (MANDATORY)
+## Commit best practices (MANDATORY — sourced from Git docs via context7)
 
 - **Atomic commits**: each commit is a single logical change. If a description gets long, split the commit.
-- **Subject line**: max 50 chars, imperative mood (`"add foo"` not `"added foo"`), no trailing period. Prefix with area: e.g. `backend:`, `frontend:`, `config:`, `images:`.
-- **Body** (optional): blank line after subject, then explain *why* the change was made, not *what* (the diff shows what).
 - **Multiple areas**: if changes span unrelated areas, commit them separately.
+- **Subject line (first line)**: max 50 chars, imperative mood (`"add foo"` not `"added foo"`), no trailing period. Prefix with area: e.g. `backend:`, `frontend:`, `config:`, `images:`.
+- **Body** (optional but encouraged): blank line after subject. Wrap at 72 columns. Explain *why* the change was made, not *what* (the diff shows what). Be explicit even if the reason seems obvious.
+- **Signed-off-by**: include a `Signed-off-by` trailer via `git commit -s` for accountability.
