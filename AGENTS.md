@@ -8,6 +8,19 @@ Educational quiz web app (Spanish) for children: count objects or sum their valu
 
 This file must be updated on every change that affects project structure, setup, configuration, dependencies, conventions, or any other information documented here. Keeping it accurate is required for the AI to work correctly.
 
+## Code exploration (MANDATORY)
+
+Use **codegraph tools (cgc)** as the primary way to explore and understand code:
+
+- `codegraph_context_for_task` — files/symbols relevant to a natural-language task
+- `codegraph_find_symbol`, `codegraph_search_symbols` — locate symbols by name/query
+- `codegraph_search_semantic` — hybrid semantic + token search
+- `codegraph_find_callers`, `codegraph_find_callees`, `codegraph_trace_dependencies` — call graph
+- `codegraph_list_files`, `codegraph_get_impact_radius`, `codegraph_find_related_tests`
+- `codegraph_architecture_overview`, `codegraph_graph_stats`, `codegraph_detect_frameworks`
+
+Only fall back to `grep`, `read`, or `glob` when a codegraph query does not satisfy the need (e.g. result missing, too coarse, or tool error). Use the active repo's indexed graph; re-index with `codegraph_index_repo` if needed.
+
 ## Run (two terminals)
 
 ```bash
