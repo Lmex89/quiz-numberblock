@@ -37,6 +37,15 @@ python3 -m http.server 9093 --bind 0.0.0.0 --directory frontend
 
 Or use `fish start.fish` to do all of the above automatically.
 
+## Tests
+
+```bash
+python -m pytest -q   # from the repo root
+```
+
+pytest and `httpx` (for FastAPI `TestClient`) are in `backend/requirements.txt`.
+No CI, no lint/typecheck.
+
 ## Structure
 
 | Path | Role |
@@ -45,10 +54,11 @@ Or use `fish start.fish` to do all of the above automatically.
 | `backend/game_logic.py` | Gallery pagination and sum quiz generation |
 | `backend/session_manager.py` | In-memory per-browser session store |
 | `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
-| `backend/config.py` | Loads `config.json` with defaults |
+| `backend/config.py` | Single home for shipped defaults and the `config.json` overlay; `get`/`get_all` read lazily, `reload` drops the cache |
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js` (gallery), `sum.js` |
+| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config and Sesión rule unit tests |
 | `static/images/` | `1.jpg`/`.jpeg`–`N.jpg`/`.jpeg` (filename = value for sum and gallery) |
 
 ## Key details
@@ -59,7 +69,7 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
-- **Tests**: `pytest` under `tests/`; run from the repo root with `python -m pytest -q`. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
+- **Tests**: `pytest` + FastAPI `TestClient`; run from the repo root with `python -m pytest -q`. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
 
 ## Commit best practices (MANDATORY — sourced from Git docs via context7)
 
