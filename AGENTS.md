@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no test/lint/typecheck.
+Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no lint/typecheck.
 
 ## AGENTS.md updates (MANDATORY)
 
@@ -37,28 +37,39 @@ python3 -m http.server 9093 --bind 0.0.0.0 --directory frontend
 
 Or use `fish start.fish` to do all of the above automatically.
 
+## Tests
+
+```bash
+python -m pytest -q   # from the repo root
+```
+
+pytest and `httpx` (for FastAPI `TestClient`) are in `backend/requirements.txt`.
+No CI, no lint/typecheck.
+
 ## Structure
 
 | Path | Role |
 |---|---|
 | `backend/main.py` | FastAPI entrypoint |
-| `backend/game_logic.py` | Gallery pagination and sum quiz generation |
-| `backend/session_manager.py` | In-memory per-browser session store |
-| `backend/config.py` | Loads `config.json` with defaults |
-| `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
+| `backend/game_logic.py` | Gallery pagination and sum quiz generation; reads config per call |
+| `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
+| `backend/config.py` | Single home for shipped defaults and the `config.json` overlay; `get`/`get_all` read lazily, `reload` drops the cache |
+| `config.json` | Game tuning knobs (sum ranges, gallery settings) plus the image-tooling `TOTAL_IMAGES` knob |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js` (gallery), `sum.js` |
+| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config, Sesión rule, and quiz-generation tests under fixture tuning |
 | `static/images/` | `1.jpg`/`.jpeg`–`N.jpg`/`.jpeg` (filename = value for sum and gallery) |
 
 ## Key details
 
 - **Game modes**: Galería (`galeria.html`) and Suma (`sum.html`). Count was retired (ADR-0003).
-- **Session**: Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart).
-- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` from `config.json`). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
+- **Session**: Owned by `backend/sesion.py` (storage, schema, rules, verdict). Via `X-Session-Id` header. Backend returns `session_id` in successful quiz/verify responses (error bodies omit it); the frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart). Quiz responses carry the pre-answer `streak`; a normal quiz omits `reto_active`, a Reto quiz carries it. Verify verdicts carry the authoritative `streak` and `reto_active`; the frontend renders the verdict's `message` verbatim.
+- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Missing numberblock images fall back to the served Placeholder `static/images/placeholder.svg`. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` through the backend config module). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
+- **Image URLs**: The backend resolves each value to `.jpg` then `.jpeg` (ADR-0001). Quiz payloads carry `option_images` (one entry per option, same order) and `correct_image_url`; gallery and quiz payloads carry `placeholder_url`. The frontend renders those URLs only and never builds one from a value.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
-- **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
+- **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Driven only by these keys, not `TOTAL_IMAGES` (image tooling); gallery settings do not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
-- **No tests, no CI, no formatter** — none configured. Logging via `loguru` (stderr, DEBUG+).
+- **Tests**: `pytest` + FastAPI `TestClient`; run from the repo root with `python -m pytest -q`. `tests/conftest.py` puts the repo root and `backend/` on `sys.path`, so tests import the same top-level `config`/`game_logic`/`sesion` modules the app uses. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
 
 ## Commit best practices (MANDATORY — sourced from Git docs via context7)
 
@@ -67,6 +78,18 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Subject line (first line)**: max 50 chars, imperative mood (`"add foo"` not `"added foo"`), no trailing period. Prefix with area: e.g. `backend:`, `frontend:`, `config:`, `images:`.
 - **Body** (optional but encouraged): blank line after subject. Wrap at 72 columns. Explain *why* the change was made, not *what* (the diff shows what). Be explicit even if the reason seems obvious.
 - **Signed-off-by**: include a `Signed-off-by` trailer via `git commit -s` for accountability.
+
+## Pull requests (MANDATORY)
+
+Every PR uses the `pr` skill (`.agents/skills/pr/SKILL.md`) and its body
+template: **Summary** with the smallest useful diagram/diff/tree,
+**Evidence** with a before/after, and **Merge Danger** with door and blast
+radius. Use the Spanish domain terms from `GLOSSARY.md`. Open PRs from an
+integration branch into `main`.
+
+Record every new PR here (number, title, head → base):
+
+- #15 — spec: deepen the Sesión — `spec/deepen-sesion` → `main`
 
 ## Agent skills
 
