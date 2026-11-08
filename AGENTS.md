@@ -87,6 +87,10 @@ template: **Summary** with the smallest useful diagram/diff/tree,
 radius. Use the Spanish domain terms from `GLOSSARY.md`. Open PRs from an
 integration branch into `main`.
 
+Record every new PR here (number, title, head → base):
+
+- #15 — spec: deepen the Sesión — `spec/deepen-sesion` → `main`
+
 ## Agent skills
 
 ### Issue tracker
