@@ -1,17 +1,7 @@
 import os
 import random
 from loguru import logger
-from config import get
-
-SUM_MIN_ITEMS = get("SUM_MIN_ITEMS")
-SUM_MAX_ITEMS = get("SUM_MAX_ITEMS")
-SUM_MIN_VALUE = get("SUM_MIN_VALUE")
-SUM_MAX_VALUE = get("SUM_MAX_VALUE")
-SUM_TOTAL_MAX = get("SUM_TOTAL_MAX")
-SUM_BIG_THRESHOLD = get("SUM_BIG_THRESHOLD")
-SUM_SMALL_MIN = get("SUM_SMALL_MIN")
-SUM_SMALL_MAX = get("SUM_SMALL_MAX")
-TOTAL_IMAGES = get("TOTAL_IMAGES")
+import config
 
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "images")
 
@@ -38,8 +28,8 @@ def _image_exists(num: int) -> bool:
 
 
 def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
-    continuous_max = get("GALLERY_CONTINUOUS_MAX")
-    extras = get("GALLERY_EXTRAS")
+    continuous_max = config.get("GALLERY_CONTINUOUS_MAX")
+    extras = config.get("GALLERY_EXTRAS")
 
     numbers = set(range(1, continuous_max + 1))
     for num in extras:
@@ -72,7 +62,7 @@ def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
     }
 
 
-def pick_random_images(count: int, max_value: int = TOTAL_IMAGES) -> list[dict]:
+def pick_random_images(count: int, max_value: int) -> list[dict]:
     nums = [random.randint(1, max_value) for _ in range(count)]
     images = [
         {"filename": _image_filename(n), "value": n, "url": _image_url(n)}
@@ -109,12 +99,21 @@ def _generate_sum_distractors(correct: int, min_val: int, max_val: int, count: i
 
 
 def generate_sum_quiz(streak: int = 0) -> dict:
+    sum_min_items = config.get("SUM_MIN_ITEMS")
+    sum_max_items = config.get("SUM_MAX_ITEMS")
+    sum_min_value = config.get("SUM_MIN_VALUE")
+    sum_max_value = config.get("SUM_MAX_VALUE")
+    sum_total_max = config.get("SUM_TOTAL_MAX")
+    big_threshold = config.get("SUM_BIG_THRESHOLD")
+    small_min = config.get("SUM_SMALL_MIN")
+    default_small_max = config.get("SUM_SMALL_MAX")
+
     for attempt in range(50):
-        num_items = random.randint(SUM_MIN_ITEMS, SUM_MAX_ITEMS)
-        images = pick_random_images(num_items, SUM_MAX_VALUE)
+        num_items = random.randint(sum_min_items, sum_max_items)
+        images = pick_random_images(num_items, sum_max_value)
         total = sum(img["value"] for img in images)
-        logger.debug(f"Sum quiz attempt {attempt + 1}: num_items={num_items}, values={[img['value'] for img in images]}, total={total}, max={SUM_TOTAL_MAX}")
-        if total <= SUM_TOTAL_MAX:
+        logger.debug(f"Sum quiz attempt {attempt + 1}: num_items={num_items}, values={[img['value'] for img in images]}, total={total}, max={sum_total_max}")
+        if total <= sum_total_max:
             logger.debug(f"Found valid total in attempt {attempt + 1}")
             break
     else:
@@ -123,16 +122,16 @@ def generate_sum_quiz(streak: int = 0) -> dict:
     if num_items == 2:
         v0, v1 = images[0]["value"], images[1]["value"]
         if streak > 20:
-            small_max = min(10 + 2 * ((streak - 10) // 10) + 1, SUM_MAX_VALUE)
+            small_max = min(10 + 2 * ((streak - 10) // 10) + 1, sum_max_value)
         else:
-            small_max = SUM_SMALL_MAX
-        logger.debug(f"Checking big/small logic: v0={v0}, v1={v1}, threshold={SUM_BIG_THRESHOLD}, small_range=[{SUM_SMALL_MIN},{small_max}] (streak={streak})")
-        if v0 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v1 <= small_max):
+            small_max = default_small_max
+        logger.debug(f"Checking big/small logic: v0={v0}, v1={v1}, threshold={big_threshold}, small_range=[{small_min},{small_max}] (streak={streak})")
+        if v0 > big_threshold and not (small_min <= v1 <= small_max):
             logger.info(f"v0={v0} is big and v1={v1} is not small, replacing v1")
             images[1] = pick_random_images(1, small_max)[0]
             total = images[0]["value"] + images[1]["value"]
             logger.debug(f"After replacement: values=[{images[0]['value']}, {images[1]['value']}], total={total}")
-        elif v1 > SUM_BIG_THRESHOLD and not (SUM_SMALL_MIN <= v0 <= small_max):
+        elif v1 > big_threshold and not (small_min <= v0 <= small_max):
             logger.info(f"v1={v1} is big and v0={v0} is not small, replacing v0")
             images[0] = pick_random_images(1, small_max)[0]
             total = images[0]["value"] + images[1]["value"]
@@ -140,8 +139,8 @@ def generate_sum_quiz(streak: int = 0) -> dict:
         else:
             logger.debug(f"No replacement needed: big/small pairing already valid")
 
-    sum_min = SUM_MIN_ITEMS * SUM_MIN_VALUE
-    sum_max = SUM_TOTAL_MAX
+    sum_min = sum_min_items * sum_min_value
+    sum_max = sum_total_max
     distractor_min = max(sum_min, total - 5)
     distractor_max = min(sum_max, total + 5)
     logger.debug(f"Distractor range: sum_min={sum_min}, sum_max={sum_max}, distractor_min={distractor_min}, distractor_max={distractor_max}")
@@ -167,6 +166,8 @@ def generate_sum_quiz(streak: int = 0) -> dict:
 
 
 def generate_repeated_sum_quiz() -> dict:
+    sum_total_max = config.get("SUM_TOTAL_MAX")
+
     base = random.randint(1, 10)
     repeats = random.randint(2, 8)
     total = base * repeats
@@ -178,7 +179,7 @@ def generate_repeated_sum_quiz() -> dict:
     ]
 
     sum_min = repeats * 1
-    sum_max = min(10 * 8, SUM_TOTAL_MAX)
+    sum_max = min(10 * 8, sum_total_max)
     distractor_min = max(sum_min, total - 10)
     distractor_max = min(sum_max, total + 10)
     logger.debug(f"Repeated sum distractor range: min={distractor_min}, max={distractor_max}")

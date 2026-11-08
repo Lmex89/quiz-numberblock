@@ -51,20 +51,20 @@ No CI, no lint/typecheck.
 | Path | Role |
 |---|---|
 | `backend/main.py` | FastAPI entrypoint |
-| `backend/game_logic.py` | Gallery pagination and sum quiz generation |
+| `backend/game_logic.py` | Gallery pagination and sum quiz generation; reads config per call |
 | `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
 | `backend/config.py` | Single home for shipped defaults and the `config.json` overlay; `get`/`get_all` read lazily, `reload` drops the cache |
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js` (gallery), `sum.js` |
-| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config and Sesión rule unit tests |
+| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config, Sesión rule, and quiz-generation tests under fixture tuning |
 | `static/images/` | `1.jpg`/`.jpeg`–`N.jpg`/`.jpeg` (filename = value for sum and gallery) |
 
 ## Key details
 
 - **Game modes**: Galería (`galeria.html`) and Suma (`sum.html`). Count was retired (ADR-0003).
 - **Session**: Owned by `backend/sesion.py` (storage, schema, rules, verdict). Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart).
-- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` from `config.json`). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
+- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` through the backend config module). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).

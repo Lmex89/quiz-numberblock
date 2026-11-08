@@ -9,21 +9,19 @@ Requiere: pip install Pillow cairosvg (cairosvg solo para SVG)
 """
 import argparse
 import io
-import json
 import os
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "backend"))
+
 from PIL import Image, ImageDraw, ImageFont
+
+from config import get as config_get
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 W, H = 200, 200
 
-CONFIG_PATH = os.path.join(OUT_DIR, "..", "..", "config.json")
-DEFAULT_TOTAL = 32
-try:
-    with open(CONFIG_PATH) as f:
-        cfg = json.load(f)
-    TOTAL = cfg.get("TOTAL_IMAGES", DEFAULT_TOTAL)
-except (FileNotFoundError, json.JSONDecodeError):
-    TOTAL = DEFAULT_TOTAL
+TOTAL = config_get("TOTAL_IMAGES")
 
 COLORS = [
     (255, 99, 132), (54, 162, 235), (255, 206, 86), (75, 192, 192),
