@@ -53,11 +53,12 @@ No CI, no lint/typecheck.
 | `backend/main.py` | FastAPI entrypoint |
 | `backend/game_logic.py` | Gallery pagination and sum quiz generation |
 | `backend/session_manager.py` | In-memory per-browser session store |
+| `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
 | `backend/config.py` | Single home for shipped defaults and the `config.json` overlay; `get`/`get_all` read lazily, `reload` drops the cache |
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js` (gallery), `sum.js` |
-| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config unit tests |
+| `tests/` | pytest: HTTP smoke tests via FastAPI `TestClient`, plus config and Sesión rule unit tests |
 | `static/images/` | `1.jpg`/`.jpeg`–`N.jpg`/`.jpeg` (filename = value for sum and gallery) |
 
 ## Key details
