@@ -66,3 +66,17 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Subject line (first line)**: max 50 chars, imperative mood (`"add foo"` not `"added foo"`), no trailing period. Prefix with area: e.g. `backend:`, `frontend:`, `config:`, `images:`.
 - **Body** (optional but encouraged): blank line after subject. Wrap at 72 columns. Explain *why* the change was made, not *what* (the diff shows what). Be explicit even if the reason seems obvious.
 - **Signed-off-by**: include a `Signed-off-by` trailer via `git commit -s` for accountability.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as GitHub issues in `Lmex89/quiz-numberblock`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles map to the default label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` live at the repo root. See `docs/agents/domain.md`.
