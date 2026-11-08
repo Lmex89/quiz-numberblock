@@ -11,9 +11,9 @@ from pydantic import BaseModel
 import os
 import traceback
 
-from session_manager import sessions
+import sesion
 from config import get as config_get
-from game_logic import generate_gallery_page, generate_sum_quiz, generate_repeated_sum_quiz
+from game_logic import generate_gallery_page
 
 logger.info("Starting quiz app backend")
 logger.debug(f"Python version: {sys.version}")
@@ -94,17 +94,10 @@ def serve_js(filepath: str):
     return FileResponse(path)
 
 
-def _resolve_session(request: Request, response: Response) -> str:
+def _provided_session_id(request: Request) -> str | None:
     sid = request.headers.get("x-session-id") or request.cookies.get("session_id")
-    logger.debug(f"Resolving session: provided session_id={sid[:20] if sid else None}")
-    new_sid = sessions.get_session_id(sid)
-    if sid != new_sid:
-        logger.info(f"New session created: {new_sid[:8]}... (was: {sid[:20] if sid else None})")
-    elif sid:
-        logger.debug(f"Session resolved: {sid[:8]}...")
-    response.set_cookie(key="session_id", value=new_sid, httponly=False)
-    logger.debug(f"Session cookie set: {new_sid[:8]}...")
-    return new_sid
+    logger.debug(f"Provided session_id={sid[:20] if sid else None}")
+    return sid
 
 
 @app.get("/api/gallery")
@@ -117,30 +110,27 @@ def api_gallery(page: int = 1, per_page: int = 50):
 
 @app.get("/api/quiz/sum")
 def api_quiz_sum(request: Request, response: Response):
-    sid = _resolve_session(request, response)
+    provided = _provided_session_id(request)
+    sid = sesion.resolver_sesion(provided)
+    response.set_cookie(key="session_id", value=sid, httponly=False)
     logger.info(f"Generating sum quiz for session {sid[:8]}...")
     try:
-        session = sessions[sid]
-        streak = session.get("streak_sum", 0)
-        milestone = session.setdefault("boss_milestone", -1)
-        if streak > 0 and streak % 10 == 0 and streak != milestone:
-            quiz = generate_repeated_sum_quiz()
-            session["last_boss_active"] = True
-            logger.info(f"Boss quiz triggered at streak={streak}")
-        else:
-            quiz = generate_sum_quiz(streak=streak)
-            session["last_boss_active"] = False
+        _, quiz, racha = sesion.servir_quiz(sid, "sum")
     except Exception as e:
         logger.error(f"Failed to generate sum quiz: {e}\n{traceback.format_exc()}")
-        return JSONResponse(status_code=500, content={"error": "failed to generate sum quiz"})
-    sessions[sid]["last_quiz"] = quiz
+        fallo = JSONResponse(status_code=500, content={"error": "failed to generate sum quiz"})
+        fallo.set_cookie(key="session_id", value=sid, httponly=False)
+        return fallo
+    quiz = dict(quiz)  # do not mutate the quiz stored in the Sesión
+    if quiz.pop("reto_active", False):
+        quiz["boss_active"] = True  # temporary wire key until frontend lockstep ticket
     logger.info(f"Sum quiz served: total={quiz['total_sum']}, correct={quiz['correct_answer']}, options={quiz['options']}, images={[img['value'] for img in quiz['images']]}")
-    return {"session_id": sid, **quiz}
+    return {"session_id": sid, "streak": racha, **quiz}
 
 
 @app.get("/api/debug")
 def api_debug():
-    summary = sessions.get_summary()
+    summary = sesion.get_summary()
     logger.debug(f"Debug endpoint: {summary}")
     return summary
 
@@ -152,76 +142,20 @@ class VerifyRequest(BaseModel):
 
 @app.post("/api/verify")
 def api_verify(body: VerifyRequest, request: Request, response: Response):
-    sid = _resolve_session(request, response)
-    logger.debug(f"Verify request: session={sid[:8]}..., game_type={body.game_type}, answer={body.answer}")
-
+    sid = _provided_session_id(request)
+    logger.debug(f"Verify request: session={sid[:8] if sid else None}..., game_type={body.game_type}, answer={body.answer}")
     try:
-        session = sessions[sid]
-    except KeyError as e:
-        logger.error(f"Session not found: {e}, session={sid[:8]}...")
-        return JSONResponse(status_code=400, content={"error": "session not found"})
+        veredicto = sesion.registrar_respuesta(sid, body.game_type, body.answer)
+    except sesion.ErrorSesion as e:
+        logger.error(f"Verify rejected: {e}, session={sid[:8] if sid else None}...")
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
-    last = session.get("last_quiz")
-    if last is None:
-        logger.error(f"Verify called with no last_quiz: session={sid[:8]}..., game_type={body.game_type}, answer={body.answer}")
-        return JSONResponse(status_code=400, content={"error": "no quiz loaded, generate a quiz first"})
-
-    if last["game_type"] != body.game_type:
-        logger.error(f"Verify game_type mismatch: stored={last['game_type']}, received={body.game_type}, session={sid[:8]}...")
-        return JSONResponse(status_code=400, content={"error": f"game type mismatch: stored '{last['game_type']}', received '{body.game_type}'"})
-
-    stored_correct = last["correct_answer"]
-    correct = body.answer == stored_correct
-    logger.debug(f"Verify comparison: answer={body.answer}, stored_correct={stored_correct}, correct={correct}")
-
-    streak_key = f"streak_{body.game_type}"
-    fail_key = f"fail_count_{body.game_type}"
-    session.setdefault(streak_key, 0)
-    session.setdefault(fail_key, 0)
-    session.setdefault("boss_milestone", -1)
-
-    is_boss = session.get("last_boss_active", False)
-
-    if correct:
-        if is_boss:
-            session[streak_key] += 2
-            session["boss_milestone"] = session[streak_key] - 2
-            session["last_boss_active"] = False
-            logger.info(f"Boss answer correct! streak jumped to {session[streak_key]}")
-        else:
-            session[streak_key] += 1
-        session[fail_key] = 0
-        logger.debug(f"Answer correct, streak={session[streak_key]}")
-    else:
-        session[fail_key] += 1
-        logger.debug(f"Answer incorrect, fail_count={session[fail_key]}")
-        if is_boss:
-            session["boss_milestone"] = session[streak_key]
-            session["last_boss_active"] = False
-            logger.info(f"Boss answer wrong, boss milestone set, returning to normal")
-        if session[fail_key] >= 3:
-            session[streak_key] = 0
-            session[fail_key] = 0
-            session["boss_milestone"] = -1
-            logger.info(f"3 consecutive failures, streak and boss reset for session {sid[:8]}...")
-
-    msg = "¡Correcto!" if correct else f"Incorrecto. La respuesta era {stored_correct}"
-    if correct and session[streak_key] > 1:
-        msg += f" Racha: {session[streak_key]}"
-    if correct and is_boss:
-        msg = "🎉 ¡Reto superado! +2 estrellas"
-
+    response.set_cookie(key="session_id", value=sid, httponly=False)
+    veredicto["boss_active"] = veredicto.pop("reto_active")  # temporary wire key until frontend lockstep ticket
     logger.info(
-        f"Verify {body.game_type}: answer={body.answer}, correct={correct}, "
-        f"boss={is_boss}, correct_answer={stored_correct}, streak={session[streak_key]}, "
-        f"fails={session[fail_key]}, session={sid[:8]}..."
+        f"Verify {body.game_type}: answer={body.answer}, correct={veredicto['correct']}, "
+        f"boss={veredicto['boss_active']}, correct_answer={veredicto['correct_answer']}, "
+        f"streak={veredicto['streak']}, session={sid[:8]}..."
     )
 
-    return {
-        "session_id": sid,
-        "correct": correct,
-        "correct_answer": stored_correct,
-        "streak": session[streak_key],
-        "message": msg,
-        "boss_active": is_boss,
-    }
+    return {"session_id": sid, **veredicto}
