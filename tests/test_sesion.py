@@ -1,10 +1,6 @@
-import sys
 import uuid
-from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 import sesion
 
@@ -21,6 +17,7 @@ def _estado(session_id):
 def test_nueva_sesion_tiene_solo_claves_fijas():
     sid, quiz = _servir()
 
+    # shortcut: the fixed schema is storage-internal, no public read exposes it.
     assert _estado(sid) == {
         "streak_sum": 0,
         "fail_count_sum": 0,
@@ -63,7 +60,6 @@ def test_respuesta_incorrecta_normal():
         "message": f"Incorrecto. La respuesta era {quiz['correct_answer']}",
         "reto_active": False,
     }
-    assert _estado(sid)["fail_count_sum"] == 1
 
 
 def test_respuesta_correcta_resetea_fallos():
@@ -74,34 +70,48 @@ def test_respuesta_correcta_resetea_fallos():
 
     sid, quiz = _servir(sid)
     veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"])
-
     assert veredicto["streak"] == 1
-    assert _estado(sid)["fail_count_sum"] == 0
+
+    # Two more wrongs stay below the reset threshold only if the correct
+    # answer cleared the earlier failures; the third one resets.
+    for _ in range(2):
+        sid, quiz = _servir(sid)
+        veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+        assert veredicto["streak"] == 1
+
+    sid, quiz = _servir(sid)
+    veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+    assert veredicto["streak"] == 0
 
 
 def test_tres_fallos_resetean_racha_fallos_e_hito():
-    sid, quiz = _servir()
-    for _ in range(3):
+    sid, _ = _servir()
+    for racha in (1, 2, 3):
         sid, quiz = _servir(sid)
-        sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"])
-    assert _estado(sid)["streak_sum"] == 3
+        veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"])
+        assert veredicto["streak"] == racha
 
-    for _ in range(3):
+    for _ in range(2):
         sid, quiz = _servir(sid)
         veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+        assert veredicto["streak"] == 3
 
+    sid, quiz = _servir(sid)
+    veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
     assert veredicto["streak"] == 0
-    estado = _estado(sid)
-    assert estado["streak_sum"] == 0
-    assert estado["fail_count_sum"] == 0
-    assert estado["hito_consumido"] is None
+
+    # The re-arm reaches hito 10 again and offers a Reto, proving the reset
+    # cleared both the racha and the consumed hito.
+    sid, quiz = _servir_en_racha(sid, 10)
+    assert quiz.get("reto_active") is True
 
 
 def _servir_en_racha(sid, objetivo):
-    while _estado(sid)["streak_sum"] < objetivo:
-        sid, quiz = _servir(sid)
+    while True:
+        sid, quiz, racha = sesion.servir_quiz(sid, "sum")
+        if racha >= objetivo:
+            return sid, quiz
         sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"])
-    return _servir(sid)
 
 
 def test_reto_se_ofrece_solo_en_hitos_10_20_30():
@@ -133,6 +143,8 @@ def test_reto_se_ofrece_solo_en_hitos_10_20_30():
 
 def test_reto_correcto_resetea_fallos_y_consume_hito():
     sid, _ = _servir()
+    # shortcut: a fresh hito with pending failures is unreachable through the
+    # public interface; seed storage to observe the Reto override.
     _estado(sid).update(
         {"streak_sum": 10, "fail_count_sum": 2, "hito_consumido": None}
     )
@@ -143,8 +155,15 @@ def test_reto_correcto_resetea_fallos_y_consume_hito():
     veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"])
 
     assert veredicto["streak"] == 12
+
+    # Two wrongs would trip the 3-failure reset if the Reto had not cleared
+    # the failures.
+    for _ in range(2):
+        sid, quiz = _servir(sid)
+        veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+        assert veredicto["streak"] == 12
+
     estado = _estado(sid)
-    assert estado["fail_count_sum"] == 0
     assert estado["hito_consumido"] == 10
     assert estado["reto_activo"] is False
 
@@ -159,9 +178,6 @@ def test_reto_fallado_consume_el_hito_y_no_se_repite():
     assert veredicto["streak"] == 10
     assert veredicto["reto_active"] is True
     assert veredicto["message"] == f"Incorrecto. La respuesta era {quiz['correct_answer']}"
-    estado = _estado(sid)
-    assert estado["hito_consumido"] == 10
-    assert estado["fail_count_sum"] == 1
 
     sid, quiz = _servir(sid)
     assert not quiz.get("reto_active")
@@ -172,15 +188,15 @@ def test_reto_fallado_se_rearma_tras_el_reset():
     sid, quiz = _servir_en_racha(sid, 10)
     sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
 
-    for _ in range(2):
-        sid, quiz = _servir(sid)
-        assert not quiz.get("reto_active")
-        sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+    sid, quiz = _servir(sid)
+    assert not quiz.get("reto_active")
+    veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+    assert veredicto["streak"] == 10
 
-    estado = _estado(sid)
-    assert estado["streak_sum"] == 0
-    assert estado["fail_count_sum"] == 0
-    assert estado["hito_consumido"] is None
+    sid, quiz = _servir(sid)
+    assert not quiz.get("reto_active")
+    veredicto = sesion.registrar_respuesta(sid, "sum", quiz["correct_answer"] + 1)
+    assert veredicto["streak"] == 0
 
     sid, quiz = _servir_en_racha(sid, 10)
     assert quiz.get("reto_active") is True
@@ -188,6 +204,8 @@ def test_reto_fallado_se_rearma_tras_el_reset():
 
 def test_reset_de_tres_fallos_anula_rama_de_reto_fallado():
     sid, _ = _servir()
+    # shortcut: a third failure while a Reto is armed is unreachable through
+    # the public interface; seed storage to exercise the reset override.
     _estado(sid).update(
         {"streak_sum": 10, "fail_count_sum": 2, "hito_consumido": None}
     )
@@ -198,10 +216,9 @@ def test_reset_de_tres_fallos_anula_rama_de_reto_fallado():
 
     assert veredicto["streak"] == 0
     assert veredicto["reto_active"] is True
-    estado = _estado(sid)
-    assert estado["streak_sum"] == 0
-    assert estado["fail_count_sum"] == 0
-    assert estado["hito_consumido"] is None
+
+    sid, quiz = _servir_en_racha(sid, 10)
+    assert quiz.get("reto_active") is True
 
 
 def test_servir_quiz_resuelve_o_crea_sesion():
@@ -211,7 +228,8 @@ def test_servir_quiz_resuelve_o_crea_sesion():
 
     assert sid_desconocida != sid_nueva
     assert sid_repetida == sid_nueva
-    assert _estado(sid_desconocida)["streak_sum"] == 0
+    _, _, racha = sesion.servir_quiz(sid_desconocida, "sum")
+    assert racha == 0
 
 
 def test_registrar_respuesta_desconocida_falla_sin_crear_sesion():
@@ -233,16 +251,17 @@ def test_tipos_de_juego_no_suma_rechazados_sin_tocar_estado():
     assert sesion.get_summary() == antes
 
     sid, _ = _servir()
-    estado_antes = dict(_estado(sid))
     with pytest.raises(sesion.TipoDeJuegoInvalido):
         sesion.registrar_respuesta(sid, "streak_count", 1)
-    assert _estado(sid) == estado_antes
-    assert "streak_count" not in _estado(sid)
-    assert "fail_count_count" not in _estado(sid)
+    # The rejected call left the session untouched: it still starts at racha 0.
+    _, _, racha = sesion.servir_quiz(sid, "sum")
+    assert racha == 0
 
 
 def test_sin_ultimo_quiz_falla():
     sid, _ = _servir()
+    # shortcut: servir_quiz always stores a quiz, so clear it directly to
+    # reach the guard; upgrade if serving ever becomes optional.
     _estado(sid)["last_quiz"] = None
 
     with pytest.raises(sesion.SinUltimoQuiz):
@@ -251,6 +270,8 @@ def test_sin_ultimo_quiz_falla():
 
 def test_tipo_de_juego_no_coincide_falla():
     sid, quiz = _servir()
+    # shortcut: servir_quiz validates the type, so the mismatch is unreachable
+    # publicly; mutate the stored quiz to exercise the guard.
     quiz["game_type"] = "count"
 
     with pytest.raises(sesion.TipoDeJuegoNoCoincide):
@@ -259,6 +280,8 @@ def test_tipo_de_juego_no_coincide_falla():
 
 def test_sesion_legacy_con_claves_extra_sigue_funcionando():
     sid, _ = _servir()
+    # shortcut: legacy residue only arrives from old storage; seed it directly
+    # because no public call creates extra keys.
     estado = _estado(sid)
     estado["streak_count"] = 7
     estado["fail_count_count"] = 7

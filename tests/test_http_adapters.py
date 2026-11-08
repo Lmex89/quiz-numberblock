@@ -1,13 +1,9 @@
-import sys
 import uuid
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.main import app  # inserts backend/ on sys.path before sesion imports
+from backend.main import app
 import sesion  # same top-level module main.py uses (shared state and monkeypatch target)
 
 
