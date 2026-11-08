@@ -52,7 +52,7 @@ function scatter(els) {
   });
 }
 
-function renderImages(images) {
+function renderImages(images, placeholderUrl) {
   const count = images.length;
   const perRow = count <= 4 ? count : Math.min(6, Math.ceil(Math.sqrt(count * 2)));
   const gridW = 420;
@@ -65,7 +65,7 @@ function renderImages(images) {
       const wrap = `<div class="img-wrap" style="animation-delay:${i * 0.08}s">
           <img src="${img.url}" alt="${img.filename}" loading="lazy"
                width="${imgSize}" height="${imgSize}"
-               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22%23FFE8D6%22/%3E%3Ccircle cx=%22100%22 cy=%2285%22 r=%2230%22 fill=%22%23FFD93D%22 opacity=%22.5%22/%3E%3Ccircle cx=%2270%22 cy=%22120%22 r=%2220%22 fill=%22%23FF6B35%22 opacity=%22.4%22/%3E%3Ccircle cx=%22130%22 cy=%22120%22 r=%2220%22 fill=%22%234ECDC4%22 opacity=%22.4%22/%3E%3C/svg%3E';this.style.objectFit='contain'">
+               onerror="this.onerror=null;this.src='${placeholderUrl}';this.style.objectFit='contain'">
           <span class="sticker">${img.value}</span>
         </div>`;
       if (i === 0) return wrap;
@@ -76,12 +76,11 @@ function renderImages(images) {
   wraps.forEach((_, i) => setTimeout(() => Audio.playPop(), i * 100));
 }
 
-function renderOptions(options, onClick) {
-  $options.innerHTML = options
-    .map(v => {
-      const imgUrl = `/static/images/${v}.jpg`;
+function renderOptions(optionImages, onClick) {
+  $options.innerHTML = optionImages
+    .map(({ value: v, url }) => {
       return `<button class="opt" data-val="${v}">
-        <img src="${imgUrl}" alt="${v}" loading="lazy" class="opt-img"
+        <img src="${url}" alt="${v}" loading="lazy" class="opt-img"
              onerror="this.style.display='none'">
         <span class="opt-num">${v}</span>
       </button>`;
@@ -147,7 +146,7 @@ async function loadQuiz() {
     const data = await API.getQuiz(GAME_TYPE);
     $streak.textContent = data.streak;
     persistStreak(data.streak);
-    renderImages(data.images);
+    renderImages(data.images, data.placeholder_url);
     if (data.reto_active) {
       $question.textContent = `🔥 ¡Reto! ¿Cuánto es ${data.base_value} repetido ${data.repeats} veces?`;
       $body.classList.add('reto-mode');
@@ -156,12 +155,12 @@ async function loadQuiz() {
       $body.classList.remove('reto-mode');
     }
 
-    renderOptions(data.options, (answer, btn) => {
+    renderOptions(data.option_images, (answer, btn) => {
       if (loading) return;
       Audio.playClick();
       loading = true;
       disable();
-      verifyAnswer(answer, data.images, btn);
+      verifyAnswer(answer, data, btn);
     });
   } catch (err) {
     $feedback.textContent = 'Error al cargar 😢';
@@ -171,7 +170,7 @@ async function loadQuiz() {
   }
 }
 
-async function verifyAnswer(answer, images, btn) {
+async function verifyAnswer(answer, data, btn) {
   try {
     const result = await API.verifyAnswer(GAME_TYPE, answer);
     $streak.textContent = result.streak;
@@ -183,7 +182,7 @@ async function verifyAnswer(answer, images, btn) {
       $feedback.innerHTML = result.reto_active ? '' : '<span class="celebrate">🎉</span> ';
       $feedback.append(result.message);
 
-      showResultOverlay(images, result.correct_answer);
+      showResultOverlay(data.images, result.correct_answer, data.correct_image_url, data.placeholder_url);
 
       $body.className = 'success';
       Audio.playCorrect();
@@ -203,7 +202,7 @@ async function verifyAnswer(answer, images, btn) {
   }
 }
 
-function showResultOverlay(images, total) {
+function showResultOverlay(images, total, correctImageUrl, placeholderUrl) {
   const existing = document.querySelector('.clash-overlay');
   if (existing) existing.remove();
 
@@ -213,7 +212,7 @@ function showResultOverlay(images, total) {
 
   function buildGroup(arr) {
     return arr.map((img, i) =>
-      `<img src="${img.url}" alt="${img.value}" class="cimg" onerror="this.style.display='none'">` +
+      `<img src="${img.url}" alt="${img.value}" class="cimg" onerror="this.onerror=null;this.src='${placeholderUrl}'">` +
       (i < arr.length - 1 ? '<span class="cop">+</span>' : '')
     ).join('');
   }
@@ -242,7 +241,7 @@ function showResultOverlay(images, total) {
       <div class="iflash"></div>
       <div class="istars">${stars}</div>
       <div class="cresult">
-        <img src="/static/images/${total}.jpg" alt="${total}" class="cresult-img" onerror="this.style.display='none'">
+        <img src="${correctImageUrl}" alt="${total}" class="cresult-img" onerror="this.onerror=null;this.src='${placeholderUrl}'">
         <span class="cresult-label">${total}</span>
       </div>
     </div>`;
