@@ -8,7 +8,7 @@
     "SUM_BIG_THRESHOLD": "Si un sumando supera este valor, el otro se fuerza al rango small_min..small_max",
     "SUM_SMALL_MIN": "Límite inferior del rango 'pequeño' para el segundo sumando",
     "SUM_SMALL_MAX": "Límite superior base del rango 'pequeño' (aumenta con la racha >20)",
-    "TOTAL_IMAGES": "Cantidad total de imágenes disponibles (1.jpg a N.jpg)",
+    "TOTAL_IMAGES": "Cantidad de imágenes (1.jpg a N.jpg) que genera o importa static/images/generate_placeholders.py; no es una opción del juego",
     "GALLERY_CONTINUOUS_MAX": "La galería muestra 1..N de forma continua (con placeholder si falta el archivo)",
     "GALLERY_EXTRAS": "Lista de números adicionales (> N) que también se muestran en la galería"
   },
