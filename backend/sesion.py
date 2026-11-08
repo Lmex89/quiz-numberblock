@@ -48,7 +48,7 @@ def _normalizar(sesion: dict) -> None:
         sesion.setdefault(clave, valor)
 
 
-def _resolver_sesion(session_id: str | None) -> str:
+def resolver_sesion(session_id: str | None) -> str:
     if session_id and session_id in _sesiones:
         return session_id
     nuevo = str(uuid.uuid4())
@@ -57,9 +57,9 @@ def _resolver_sesion(session_id: str | None) -> str:
     return nuevo
 
 
-def servir_quiz(session_id: str | None, game_type: str = "sum") -> tuple[str, dict]:
+def servir_quiz(session_id: str | None, game_type: str = "sum") -> tuple[str, dict, int]:
     _validar_tipo(game_type)
-    sid = _resolver_sesion(session_id)
+    sid = resolver_sesion(session_id)
     sesion = _sesiones[sid]
     _normalizar(sesion)
     racha = sesion["streak_sum"]
@@ -74,10 +74,10 @@ def servir_quiz(session_id: str | None, game_type: str = "sum") -> tuple[str, di
     sesion["reto_activo"] = es_reto
     sesion["last_quiz"] = quiz
     logger.info(f"Quiz servido: session={sid[:8]}..., racha={racha}, reto={es_reto}")
-    return sid, quiz
+    return sid, quiz, racha
 
 
-def registrar_respuesta(session_id: str, game_type: str, answer: int) -> dict:
+def registrar_respuesta(session_id: str | None, game_type: str, answer: int) -> dict:
     _validar_tipo(game_type)
     sesion = _sesiones.get(session_id)
     if sesion is None:
