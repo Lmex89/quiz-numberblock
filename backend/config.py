@@ -5,18 +5,16 @@ from loguru import logger
 _CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "config.json")
 
 DEFAULTS = {
-    "COUNT_MIN": 1,
-    "COUNT_MAX": 5,
     "SUM_MIN_ITEMS": 2,
-    "SUM_MAX_ITEMS": 3,
+    "SUM_MAX_ITEMS": 2,
     "SUM_MIN_VALUE": 1,
-    "SUM_MAX_VALUE": 20,
-    "SUM_TOTAL_MAX": 32,
-    "SUM_BIG_THRESHOLD": 30,
+    "SUM_MAX_VALUE": 300,
+    "SUM_TOTAL_MAX": 300,
+    "SUM_BIG_THRESHOLD": 15,
     "SUM_SMALL_MIN": 1,
     "SUM_SMALL_MAX": 10,
-    "TOTAL_IMAGES": 20,
-    "GALLERY_CONTINUOUS_MAX": 20,
+    "TOTAL_IMAGES": 300,
+    "GALLERY_CONTINUOUS_MAX": 300,
     "GALLERY_EXTRAS": [],
 }
 
@@ -38,6 +36,12 @@ def _load():
         logger.warning(f"Config file {_CONFIG_FILE} not found, using defaults")
         _config = dict(DEFAULTS)
     logger.debug(f"Effective config: {_config}")
+
+
+def reload():
+    """Drop the cache so the next read picks up a changed config file."""
+    global _config
+    _config = None
 
 
 def get(key: str):
