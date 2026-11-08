@@ -64,7 +64,7 @@ No CI, no lint/typecheck.
 
 - **Game modes**: Galería (`galeria.html`) and Suma (`sum.html`). Count was retired (ADR-0003).
 - **Session**: Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart).
-- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` from `config.json`). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
+- **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` through the backend config module). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
