@@ -76,12 +76,12 @@ function renderImages(images, placeholderUrl) {
   wraps.forEach((_, i) => setTimeout(() => Audio.playPop(), i * 100));
 }
 
-function renderOptions(optionImages, onClick) {
+function renderOptions(optionImages, placeholderUrl, onClick) {
   $options.innerHTML = optionImages
     .map(({ value: v, url }) => {
       return `<button class="opt" data-val="${v}">
         <img src="${url}" alt="${v}" loading="lazy" class="opt-img"
-             onerror="this.style.display='none'">
+             onerror="this.onerror=null;this.src='${placeholderUrl}';this.style.objectFit='contain'">
         <span class="opt-num">${v}</span>
       </button>`;
     })
@@ -155,7 +155,7 @@ async function loadQuiz() {
       $body.classList.remove('reto-mode');
     }
 
-    renderOptions(data.option_images, (answer, btn) => {
+    renderOptions(data.option_images, data.placeholder_url, (answer, btn) => {
       if (loading) return;
       Audio.playClick();
       loading = true;

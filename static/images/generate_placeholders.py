@@ -1,11 +1,13 @@
 """
-Genera placeholders 1.jpg a N.jpg (200x200 px) según config.json.
+Genera placeholders 1.jpg a N.jpg (200x200 px) según `TOTAL_IMAGES` de la
+configuración (defaults en backend/config.py, overlay opcional en config.json).
 No sobrescribe archivos .jpg/.jpeg existentes.
 
 Uso:
   python generate_placeholders.py                          # solo placeholders para los que falten
   python generate_placeholders.py --source /ruta/imagenes/  # importa imágenes desde otra carpeta
-Requiere: pip install Pillow cairosvg (cairosvg solo para SVG)
+Requiere: pip install Pillow cairosvg loguru (cairosvg solo para SVG; loguru
+lo importa backend/config.py).
 """
 import argparse
 import io
@@ -20,8 +22,6 @@ from config import get as config_get
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 W, H = 200, 200
-
-TOTAL = config_get("TOTAL_IMAGES")
 
 COLORS = [
     (255, 99, 132), (54, 162, 235), (255, 206, 86), (75, 192, 192),
@@ -61,9 +61,9 @@ def _open_image(path: str) -> Image.Image | None:
         return None
 
 
-def _import_from_source(src_dir: str) -> int:
+def _import_from_source(src_dir: str, total_images: int) -> int:
     imported = 0
-    for i in range(1, TOTAL + 1):
+    for i in range(1, total_images + 1):
         dst = os.path.join(OUT_DIR, f"{i}.jpg")
         if os.path.exists(dst):
             continue
@@ -110,12 +110,14 @@ def main():
     parser.add_argument("--source", help="Carpeta con imágenes fuente (1.jpg, 2.jpg, …)")
     args = parser.parse_args()
 
+    total_images = config_get("TOTAL_IMAGES")
+
     imported = 0
     if args.source:
         if not os.path.isdir(args.source):
             print(f"Error: no existe la carpeta '{args.source}'")
             return
-        imported = _import_from_source(args.source)
+        imported = _import_from_source(args.source, total_images)
 
     font = None
     for size in (90, 72, 60, 48):
@@ -128,18 +130,17 @@ def main():
         font = ImageFont.load_default()
 
     placeholders = 0
-    for i in range(1, TOTAL + 1):
+    for i in range(1, total_images + 1):
         if _generate_placeholder(i, font):
             placeholders += 1
 
-    total = imported + placeholders
     parts = []
     if imported:
         parts.append(f"{imported} importadas")
     if placeholders:
         parts.append(f"{placeholders} placeholders generados")
     if not parts:
-        print(f"✓ Todo al día — {TOTAL} imágenes ya existen en {OUT_DIR}")
+        print(f"✓ Todo al día — {total_images} imágenes ya existen en {OUT_DIR}")
     else:
         print(f"✓ Hecho: {', '.join(parts)} en {OUT_DIR}")
 

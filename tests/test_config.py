@@ -1,12 +1,8 @@
 import json
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
-from backend import config
+import config  # top-level module, the same instance the app uses
 
 # Independent copy of today's shipped tuning (ticket #11 acceptance criteria).
 SHIPPED_DEFAULTS = {
@@ -22,6 +18,13 @@ SHIPPED_DEFAULTS = {
     "GALLERY_CONTINUOUS_MAX": 300,
     "GALLERY_EXTRAS": [],
 }
+
+
+@pytest.fixture(autouse=True)
+def _restore_shared_config():
+    yield
+    # Drop fixture tuning from the shared module before the next test module.
+    config.reload()
 
 
 def _point_config_at(tmp_path, monkeypatch, data=None):

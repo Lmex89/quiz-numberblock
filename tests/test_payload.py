@@ -1,10 +1,4 @@
-import sys
 from pathlib import Path
-
-# main.py puts backend/ on sys.path; mirror that so game_logic and config are
-# the same module instances the app uses at runtime.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 from fastapi.testclient import TestClient

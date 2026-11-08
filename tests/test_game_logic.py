@@ -1,10 +1,4 @@
 import json
-import sys
-from pathlib import Path
-
-# main.py puts backend/ on sys.path; mirror that so game_logic and config are
-# the same module instances the app uses at runtime.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 import pytest
 
@@ -62,6 +56,8 @@ def test_repeated_quiz_reads_tuned_total_max(load_config):
         quiz = game_logic.generate_repeated_sum_quiz()
         distractors = [o for o in quiz["options"] if o != quiz["correct_answer"]]
 
+        assert 1 <= quiz["base_value"] <= 10
+        assert 2 <= quiz["repeats"] <= 8
         assert quiz["total_sum"] == quiz["base_value"] * quiz["repeats"]
         assert all(o <= 75 for o in distractors)
 

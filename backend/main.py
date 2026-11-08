@@ -12,7 +12,6 @@ import os
 import traceback
 
 import sesion
-from config import get as config_get
 from game_logic import generate_gallery_page
 
 logger.info("Starting quiz app backend")
@@ -100,6 +99,10 @@ def _provided_session_id(request: Request) -> str | None:
     return sid
 
 
+def _set_session_cookie(response: Response, sid: str) -> None:
+    response.set_cookie(key="session_id", value=sid, httponly=False)
+
+
 @app.get("/api/gallery")
 def api_gallery(page: int = 1, per_page: int = 50):
     logger.debug(f"Gallery request: page={page}, per_page={per_page}")
@@ -111,15 +114,16 @@ def api_gallery(page: int = 1, per_page: int = 50):
 @app.get("/api/quiz/sum")
 def api_quiz_sum(request: Request, response: Response):
     provided = _provided_session_id(request)
+    # Resolve before generating so a generation failure can still set the cookie.
     sid = sesion.resolver_sesion(provided)
-    response.set_cookie(key="session_id", value=sid, httponly=False)
+    _set_session_cookie(response, sid)
     logger.info(f"Generating sum quiz for session {sid[:8]}...")
     try:
         _, quiz, racha = sesion.servir_quiz(sid, "sum")
     except Exception as e:
         logger.error(f"Failed to generate sum quiz: {e}\n{traceback.format_exc()}")
         fallo = JSONResponse(status_code=500, content={"error": "failed to generate sum quiz"})
-        fallo.set_cookie(key="session_id", value=sid, httponly=False)
+        _set_session_cookie(fallo, sid)
         return fallo
     logger.info(f"Sum quiz served: total={quiz['total_sum']}, correct={quiz['correct_answer']}, options={quiz['options']}, images={[img['value'] for img in quiz['images']]}")
     return {"session_id": sid, "streak": racha, **quiz}
@@ -147,7 +151,7 @@ def api_verify(body: VerifyRequest, request: Request, response: Response):
         logger.error(f"Verify rejected: {e}, session={sid[:8] if sid else None}...")
         return JSONResponse(status_code=400, content={"error": str(e)})
 
-    response.set_cookie(key="session_id", value=sid, httponly=False)
+    _set_session_cookie(response, sid)
     logger.info(
         f"Verify {body.game_type}: answer={body.answer}, correct={veredicto['correct']}, "
         f"reto={veredicto['reto_active']}, correct_answer={veredicto['correct_answer']}, "
