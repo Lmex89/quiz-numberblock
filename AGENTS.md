@@ -79,6 +79,14 @@ No CI, no lint/typecheck.
 - **Body** (optional but encouraged): blank line after subject. Wrap at 72 columns. Explain *why* the change was made, not *what* (the diff shows what). Be explicit even if the reason seems obvious.
 - **Signed-off-by**: include a `Signed-off-by` trailer via `git commit -s` for accountability.
 
+## Pull requests (MANDATORY)
+
+Every PR uses the `pr` skill (`.agents/skills/pr/SKILL.md`) and its body
+template: **Summary** with the smallest useful diagram/diff/tree,
+**Evidence** with a before/after, and **Merge Danger** with door and blast
+radius. Use the Spanish domain terms from `GLOSSARY.md`. Open PRs from an
+integration branch into `main`.
+
 ## Agent skills
 
 ### Issue tracker
