@@ -100,14 +100,15 @@ def _generate_sum_distractors(correct: int, min_val: int, max_val: int, count: i
 
 
 def generate_sum_quiz(streak: int = 0) -> dict:
-    sum_min_items = config.get("SUM_MIN_ITEMS")
-    sum_max_items = config.get("SUM_MAX_ITEMS")
-    sum_min_value = config.get("SUM_MIN_VALUE")
-    sum_max_value = config.get("SUM_MAX_VALUE")
-    sum_total_max = config.get("SUM_TOTAL_MAX")
-    big_threshold = config.get("SUM_BIG_THRESHOLD")
-    small_min = config.get("SUM_SMALL_MIN")
-    default_small_max = config.get("SUM_SMALL_MAX")
+    cfg = config.get_all()
+    sum_min_items = cfg["SUM_MIN_ITEMS"]
+    sum_max_items = cfg["SUM_MAX_ITEMS"]
+    sum_min_value = cfg["SUM_MIN_VALUE"]
+    sum_max_value = cfg["SUM_MAX_VALUE"]
+    sum_total_max = cfg["SUM_TOTAL_MAX"]
+    big_threshold = cfg["SUM_BIG_THRESHOLD"]
+    small_min = cfg["SUM_SMALL_MIN"]
+    default_small_max = cfg["SUM_SMALL_MAX"]
 
     for attempt in range(50):
         num_items = random.randint(sum_min_items, sum_max_items)
