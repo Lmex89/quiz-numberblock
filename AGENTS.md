@@ -52,7 +52,6 @@ No CI, no lint/typecheck.
 |---|---|
 | `backend/main.py` | FastAPI entrypoint |
 | `backend/game_logic.py` | Gallery pagination and sum quiz generation |
-| `backend/session_manager.py` | In-memory per-browser session store |
 | `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
 | `backend/config.py` | Single home for shipped defaults and the `config.json` overlay; `get`/`get_all` read lazily, `reload` drops the cache |
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
@@ -64,7 +63,7 @@ No CI, no lint/typecheck.
 ## Key details
 
 - **Game modes**: Galería (`galeria.html`) and Suma (`sum.html`). Count was retired (ADR-0003).
-- **Session**: Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart).
+- **Session**: Owned by `backend/sesion.py` (storage, schema, rules, verdict). Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart).
 - **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` from `config.json`). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
