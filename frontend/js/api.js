@@ -1,7 +1,7 @@
 const loc = window.location;
 const API_BASE = `${loc.protocol}//${loc.hostname}:8000`;
 const SESSION_STORAGE_KEY = 'quiz_session_cache_v1';
-const SESSION_TTL_MS = 10 * 60 * 1000;
+const MIRROR_TTL_MS = 10 * 60 * 1000;
 
 function readStoredSessionId() {
   try {
@@ -26,7 +26,7 @@ function persistSessionId(sessionId) {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
       sessionId,
-      expiresAt: Date.now() + SESSION_TTL_MS,
+      expiresAt: Date.now() + MIRROR_TTL_MS,
     }));
   } catch {
     // no-op when storage is unavailable
