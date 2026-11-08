@@ -114,7 +114,6 @@ def test_reto_se_ofrece_solo_en_hitos_10_20_30():
         sid, quiz = _servir_en_racha(sid, hito)
 
         assert quiz.get("reto_active") is True
-        assert "boss_active" not in quiz
         assert quiz["base_value"] * quiz["repeats"] == quiz["correct_answer"]
         assert len(quiz["images"]) == quiz["repeats"]
         assert all(img["value"] == quiz["base_value"] for img in quiz["images"])
@@ -263,7 +262,7 @@ def test_sesion_legacy_con_claves_extra_sigue_funcionando():
     estado = _estado(sid)
     estado["streak_count"] = 7
     estado["fail_count_count"] = 7
-    estado["boss_milestone"] = 3
+    estado["last_count_active"] = True
     del estado["hito_consumido"]
 
     sid, quiz = _servir(sid)
@@ -272,6 +271,7 @@ def test_sesion_legacy_con_claves_extra_sigue_funcionando():
     assert veredicto["streak"] == 1
     assert estado["streak_count"] == 7
     assert estado["fail_count_count"] == 7
+    assert estado["last_count_active"] is True
     assert estado["hito_consumido"] is None
 
 
