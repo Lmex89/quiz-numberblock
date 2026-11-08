@@ -15,7 +15,7 @@ def test_gallery_payload_shape():
 
     assert response.status_code == 200
     data = response.json()
-    assert set(data) == {"images", "page", "per_page", "total", "total_pages"}
+    assert set(data) == {"images", "placeholder_url", "page", "per_page", "total", "total_pages"}
     assert data["page"] >= 1
     assert data["per_page"] >= 1
     assert data["total"] >= 1

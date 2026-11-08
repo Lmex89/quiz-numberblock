@@ -4,6 +4,7 @@ from loguru import logger
 import config
 
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "images")
+PLACEHOLDER_URL = "/static/images/placeholder.svg"
 
 
 def _image_filename(num: int) -> str:
@@ -18,6 +19,10 @@ def _image_filename(num: int) -> str:
 
 def _image_url(num: int) -> str:
     return f"/static/images/{_image_filename(num)}"
+
+
+def _image_entry(num: int) -> dict:
+    return {"value": num, "filename": _image_filename(num), "url": _image_url(num)}
 
 
 def _image_exists(num: int) -> bool:
@@ -47,14 +52,11 @@ def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
 
     images = []
     for v in page_numbers:
-        images.append({
-            "value": v,
-            "filename": _image_filename(v),
-            "url": _image_url(v),
-        })
+        images.append(_image_entry(v))
 
     return {
         "images": images,
+        "placeholder_url": PLACEHOLDER_URL,
         "page": page,
         "per_page": per_page,
         "total": total,
@@ -65,8 +67,7 @@ def generate_gallery_page(page: int = 1, per_page: int = 50) -> dict:
 def pick_random_images(count: int, max_value: int) -> list[dict]:
     nums = [random.randint(1, max_value) for _ in range(count)]
     images = [
-        {"filename": _image_filename(n), "value": n, "url": _image_url(n)}
-        for n in nums
+        _image_entry(n) for n in nums
     ]
     logger.debug(f"Picked {len(images)} images with values: {[img['value'] for img in images]}")
     return images
@@ -158,8 +159,10 @@ def generate_sum_quiz(streak: int = 0) -> dict:
         "images": images,
         "total_sum": total,
         "options": options,
+        "option_images": [_image_entry(v) for v in options],
         "correct_answer": total,
         "correct_image_url": correct_url,
+        "placeholder_url": PLACEHOLDER_URL,
     }
     logger.info(f"Sum quiz generated: total={total}, num_items={num_items}, options={options}, values={[img['value'] for img in images]}")
     return quiz
@@ -174,8 +177,7 @@ def generate_repeated_sum_quiz() -> dict:
     logger.debug(f"Generating repeated sum quiz: base={base}, repeats={repeats}, total={total}")
 
     images = [
-        {"filename": _image_filename(base), "value": base, "url": _image_url(base)}
-        for _ in range(repeats)
+        _image_entry(base) for _ in range(repeats)
     ]
 
     sum_min = repeats * 1
@@ -193,8 +195,10 @@ def generate_repeated_sum_quiz() -> dict:
         "images": images,
         "total_sum": total,
         "options": options,
+        "option_images": [_image_entry(v) for v in options],
         "correct_answer": total,
         "correct_image_url": _image_url(total),
+        "placeholder_url": PLACEHOLDER_URL,
         "reto_active": True,
         "base_value": base,
         "repeats": repeats,

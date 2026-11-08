@@ -17,12 +17,12 @@ let totalPages = 1;
 let currentImages = [];
 let currentImageIndex = 0;
 
-function renderGallery(images) {
+function renderGallery(images, placeholderUrl) {
   currentImages = images;
   $grid.innerHTML = images.map((img, i) => `
     <div class="gallery-item" data-index="${i}" data-value="${img.value}" style="animation-delay:${i * 0.04}s">
       <img src="${img.url}" alt="${img.value}" loading="lazy" class="gallery-img"
-           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22%23FFE8D6%22/%3E%3Ccircle cx=%22100%22 cy=%2285%22 r=%2230%22 fill=%22%23FFD93D%22 opacity=%22.5%22/%3E%3Ccircle cx=%2270%22 cy=%22120%22 r=%2220%22 fill=%22%23FF6B35%22 opacity=%22.4%22/%3E%3Ccircle cx=%22130%22 cy=%22120%22 r=%2220%22 fill=%22%234ECDC4%22 opacity=%22.4%22/%3E%3C/svg%3E';this.style.objectFit='contain'">
+           onerror="this.onerror=null;this.src='${placeholderUrl}';this.style.objectFit='contain'">
       <span class="gallery-label">${img.value}</span>
     </div>
   `).join('');
@@ -132,7 +132,7 @@ async function loadPage(page, callback) {
     const data = await res.json();
     currentPage = data.page;
     totalPages = data.total_pages;
-    renderGallery(data.images);
+    renderGallery(data.images, data.placeholder_url);
     updatePagination();
     if (callback) {
       callback();
