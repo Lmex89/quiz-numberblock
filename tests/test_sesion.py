@@ -10,7 +10,8 @@ import sesion
 
 
 def _servir(session_id=None, game_type="sum"):
-    return sesion.servir_quiz(session_id, game_type)
+    sid, quiz, _ = sesion.servir_quiz(session_id, game_type)
+    return sid, quiz
 
 
 def _estado(session_id):
