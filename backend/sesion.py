@@ -66,9 +66,6 @@ def servir_quiz(session_id: str | None, game_type: str = "sum") -> tuple[str, di
     es_reto = racha > 0 and racha % 10 == 0 and racha != sesion["hito_consumido"]
     if es_reto:
         quiz = generate_repeated_sum_quiz()
-        # game_logic todavía emite el flag heredado con otro nombre.
-        quiz = {clave: valor for clave, valor in quiz.items() if not clave.endswith("_active")}
-        quiz["reto_active"] = True
     else:
         quiz = generate_sum_quiz(streak=racha)
     sesion["reto_activo"] = es_reto

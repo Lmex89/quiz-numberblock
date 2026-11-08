@@ -121,9 +121,6 @@ def api_quiz_sum(request: Request, response: Response):
         fallo = JSONResponse(status_code=500, content={"error": "failed to generate sum quiz"})
         fallo.set_cookie(key="session_id", value=sid, httponly=False)
         return fallo
-    quiz = dict(quiz)  # do not mutate the quiz stored in the Sesión
-    if quiz.pop("reto_active", False):
-        quiz["boss_active"] = True  # temporary wire key until frontend lockstep ticket
     logger.info(f"Sum quiz served: total={quiz['total_sum']}, correct={quiz['correct_answer']}, options={quiz['options']}, images={[img['value'] for img in quiz['images']]}")
     return {"session_id": sid, "streak": racha, **quiz}
 
@@ -151,10 +148,9 @@ def api_verify(body: VerifyRequest, request: Request, response: Response):
         return JSONResponse(status_code=400, content={"error": str(e)})
 
     response.set_cookie(key="session_id", value=sid, httponly=False)
-    veredicto["boss_active"] = veredicto.pop("reto_active")  # temporary wire key until frontend lockstep ticket
     logger.info(
         f"Verify {body.game_type}: answer={body.answer}, correct={veredicto['correct']}, "
-        f"boss={veredicto['boss_active']}, correct_answer={veredicto['correct_answer']}, "
+        f"reto={veredicto['reto_active']}, correct_answer={veredicto['correct_answer']}, "
         f"streak={veredicto['streak']}, session={sid[:8]}..."
     )
 
