@@ -78,8 +78,10 @@ def test_shipped_config_generation_unchanged():
             "images",
             "total_sum",
             "options",
+            "option_images",
             "correct_answer",
             "correct_image_url",
+            "placeholder_url",
         }
         assert len(values) == 2
         assert all(1 <= v <= 300 for v in values)
