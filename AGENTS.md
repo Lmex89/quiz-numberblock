@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no test/lint/typecheck.
+Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no lint/typecheck.
 
 ## AGENTS.md updates (MANDATORY)
 
@@ -37,6 +37,15 @@ python3 -m http.server 9093 --bind 0.0.0.0 --directory frontend
 
 Or use `fish start.fish` to do all of the above automatically.
 
+## Tests
+
+```bash
+python -m pytest -q   # from the repo root
+```
+
+pytest and `httpx` (for FastAPI `TestClient`) are in `backend/requirements.txt`.
+No CI, no lint/typecheck.
+
 ## Structure
 
 | Path | Role |
@@ -48,6 +57,7 @@ Or use `fish start.fish` to do all of the above automatically.
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
 | `frontend/js/` | `api.js` (fetch wrapper), `audio.js` (Web Audio SFX), `count.js` (gallery), `sum.js` |
+| `tests/` | pytest smoke tests against the HTTP seam via FastAPI `TestClient` |
 | `static/images/` | `1.jpg`/`.jpeg`–`N.jpg`/`.jpeg` (filename = value for sum and gallery) |
 
 ## Key details
@@ -58,7 +68,7 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
-- **No tests, no CI, no formatter** — none configured. Logging via `loguru` (stderr, DEBUG+).
+- **Tests**: `pytest` + FastAPI `TestClient`; run from the repo root with `python -m pytest -q`. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
 
 ## Commit best practices (MANDATORY — sourced from Git docs via context7)
 
