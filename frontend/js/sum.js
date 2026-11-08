@@ -1,6 +1,5 @@
 const GAME_TYPE = 'sum';
 let loading = false;
-const SCORE_STORAGE_TTL_MS = 10 * 60 * 1000;
 const SCORE_STORAGE_KEY = `quiz_score_cache_${GAME_TYPE}`;
 
 const $grid = document.getElementById('imageGrid');
@@ -33,7 +32,7 @@ function persistStreak(streak) {
   try {
     localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
       streak,
-      expiresAt: Date.now() + SCORE_STORAGE_TTL_MS,
+      expiresAt: Date.now() + MIRROR_TTL_MS,
     }));
   } catch {
     // no-op when storage is unavailable
@@ -77,7 +76,7 @@ function renderImages(images) {
   wraps.forEach((_, i) => setTimeout(() => Audio.playPop(), i * 100));
 }
 
-function renderOptions(options, correctAnswer, onClick) {
+function renderOptions(options, onClick) {
   $options.innerHTML = options
     .map(v => {
       const imgUrl = `/static/images/${v}.jpg`;
@@ -146,21 +145,23 @@ async function loadQuiz() {
 
   try {
     const data = await API.getQuiz(GAME_TYPE);
+    $streak.textContent = data.streak;
+    persistStreak(data.streak);
     renderImages(data.images);
-    if (data.boss_active) {
+    if (data.reto_active) {
       $question.textContent = `🔥 ¡Reto! ¿Cuánto es ${data.base_value} repetido ${data.repeats} veces?`;
-      $body.classList.add('boss-mode');
+      $body.classList.add('reto-mode');
     } else {
       $question.textContent = '¿Cuánto suman todas las imágenes?';
-      $body.classList.remove('boss-mode');
+      $body.classList.remove('reto-mode');
     }
 
-    renderOptions(data.options, data.correct_answer, (answer, btn) => {
+    renderOptions(data.options, (answer, btn) => {
       if (loading) return;
       Audio.playClick();
       loading = true;
       disable();
-      verifyAnswer(answer, data.correct_answer, data.images, btn);
+      verifyAnswer(answer, data.images, btn);
     });
   } catch (err) {
     $feedback.textContent = 'Error al cargar 😢';
@@ -170,25 +171,26 @@ async function loadQuiz() {
   }
 }
 
-async function verifyAnswer(answer, correctAnswer, images, btn) {
+async function verifyAnswer(answer, images, btn) {
   try {
     const result = await API.verifyAnswer(GAME_TYPE, answer);
     $streak.textContent = result.streak;
     persistStreak(result.streak);
-    reveal(correctAnswer, result.correct ? null : btn);
+    reveal(result.correct_answer, result.correct ? null : btn);
 
     if (result.correct) {
       $feedback.className = 'feedback ok';
-      $feedback.innerHTML = '<span class="celebrate">🎉</span> ¡Correcto!';
+      $feedback.innerHTML = result.reto_active ? '' : '<span class="celebrate">🎉</span> ';
+      $feedback.append(result.message);
 
-      showResultOverlay(images, correctAnswer);
+      showResultOverlay(images, result.correct_answer);
 
       $body.className = 'success';
       Audio.playCorrect();
       setTimeout(confetti, 1000);
     } else {
       $feedback.className = 'feedback ko';
-      $feedback.innerHTML = '😅 ¡Sigue intentando!';
+      $feedback.textContent = result.message;
       $body.className = 'error';
       Audio.playWrong();
     }

@@ -195,7 +195,7 @@ def generate_repeated_sum_quiz() -> dict:
         "options": options,
         "correct_answer": total,
         "correct_image_url": _image_url(total),
-        "boss_active": True,
+        "reto_active": True,
         "base_value": base,
         "repeats": repeats,
     }

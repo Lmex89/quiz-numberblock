@@ -39,7 +39,6 @@ def test_quiz_verify_round_trip(client):
     assert sid != supplied
     assert quiz["streak"] == 0
     assert "reto_active" not in quiz
-    assert "boss_active" not in quiz
     assert quiz["game_type"] == "sum"
 
     response = _verify(client, sid, "sum", quiz["correct_answer"])
@@ -51,9 +50,8 @@ def test_quiz_verify_round_trip(client):
         "correct_answer": quiz["correct_answer"],
         "streak": 1,
         "message": "¡Correcto!",
-        "boss_active": False,
+        "reto_active": False,
     }
-    assert "reto_active" not in response.json()
 
 
 def test_quiz_response_creates_session_and_sets_cookie(client):
@@ -85,27 +83,48 @@ def test_reto_offered_at_hito_10_and_settled_by_correct_answer(client):
         quiz = _quiz(client, sid)
         sid = quiz["session_id"]
         assert quiz["streak"] == racha
-        assert "boss_active" not in quiz
+        assert "reto_active" not in quiz
         verdict = _verify(client, sid, "sum", quiz["correct_answer"]).json()
         assert verdict["streak"] == racha + 1
 
     reto = _quiz(client, sid)
     assert reto["streak"] == 10
-    assert reto["boss_active"] is True
-    assert "reto_active" not in reto
+    assert reto["reto_active"] is True
     assert reto["base_value"] * reto["repeats"] == reto["correct_answer"]
     assert len(reto["images"]) == reto["repeats"]
 
     verdict = _verify(client, sid, "sum", reto["correct_answer"]).json()
     assert verdict["correct"] is True
-    assert verdict["boss_active"] is True
+    assert verdict["reto_active"] is True
     assert verdict["streak"] == 12
     assert verdict["message"] == "🎉 ¡Reto superado! +2 estrellas"
-    assert "reto_active" not in verdict
 
     siguiente = _quiz(client, sid)
     assert siguiente["streak"] == 12
-    assert "boss_active" not in siguiente
+    assert "reto_active" not in siguiente
+
+
+def test_three_consecutive_wrong_answers_reset_streak(client):
+    sid = str(uuid.uuid4())
+
+    for racha in range(2):
+        quiz = _quiz(client, sid)
+        sid = quiz["session_id"]
+        verdict = _verify(client, sid, "sum", quiz["correct_answer"]).json()
+        assert verdict["streak"] == racha + 1
+
+    for _ in range(3):
+        quiz = _quiz(client, sid)
+        sid = quiz["session_id"]
+        verdict = _verify(client, sid, "sum", quiz["correct_answer"] + 1).json()
+        assert verdict["correct"] is False
+
+    assert verdict["streak"] == 0
+
+    quiz = _quiz(client, sid)
+    assert quiz["streak"] == 0
+    verdict = _verify(client, sid, "sum", quiz["correct_answer"]).json()
+    assert verdict["streak"] == 1
 
 
 def test_verify_unknown_session_is_400_without_creating_one(client):
