@@ -63,13 +63,13 @@ No CI, no lint/typecheck.
 ## Key details
 
 - **Game modes**: Galería (`galeria.html`) and Suma (`sum.html`). Count was retired (ADR-0003).
-- **Session**: Owned by `backend/sesion.py` (storage, schema, rules, verdict). Via `X-Session-Id` header. Backend returns `session_id` in every response; frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart). Quiz and verify responses carry the authoritative `streak` and `reto_active`; the frontend renders the verdict's `message` verbatim.
+- **Session**: Owned by `backend/sesion.py` (storage, schema, rules, verdict). Via `X-Session-Id` header. Backend returns `session_id` in successful quiz/verify responses (error bodies omit it); the frontend stores & resends it. Three consecutive wrong answers reset the streak; a correct Reto adds two. State is in-memory (lost on restart). Quiz responses carry the pre-answer `streak`; a normal quiz omits `reto_active`, a Reto quiz carries it. Verify verdicts carry the authoritative `streak` and `reto_active`; the frontend renders the verdict's `message` verbatim.
 - **Image serving**: FastAPI mounts `/static` directly. For the Python HTTP server (port 9093), create `frontend/static -> ../static` symlink. Missing numberblock images fall back to the served Placeholder `static/images/placeholder.svg`. Run `python static/images/generate_placeholders.py` if images missing (reads `TOTAL_IMAGES` through the backend config module). For WebP/PNG, run `python static/images/convert_webp_to_jpg.py`.
 - **Image URLs**: The backend resolves each value to `.jpg` then `.jpeg` (ADR-0001). Quiz payloads carry `option_images` (one entry per option, same order) and `correct_image_url`; gallery and quiz payloads carry `placeholder_url`. The frontend renders those URLs only and never builds one from a value.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Driven only by these keys, not `TOTAL_IMAGES` (image tooling); gallery settings do not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
-- **Tests**: `pytest` + FastAPI `TestClient`; run from the repo root with `python -m pytest -q`. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
+- **Tests**: `pytest` + FastAPI `TestClient`; run from the repo root with `python -m pytest -q`. `tests/conftest.py` puts the repo root and `backend/` on `sys.path`, so tests import the same top-level `config`/`game_logic`/`sesion` modules the app uses. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
 
 ## Commit best practices (MANDATORY — sourced from Git docs via context7)
 

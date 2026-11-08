@@ -4,7 +4,7 @@ Educational web app (Spanish) for children: explore numbers in a gallery and pra
 
 ## Configuration
 
-All game tuning is in `config.json`. Key settings:
+`backend/config.py` ships the defaults; `config.json` overlays them, and any key omitted there keeps its shipped default. Key settings:
 
 | Key | Type | Description |
 |---|---|---|
