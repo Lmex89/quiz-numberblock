@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no test/lint/typecheck.
+Educational web app (Spanish) for children: explore numbers in a gallery and practice addition with numberblock images. FastAPI backend + vanilla JS frontend. No build step, no lint/typecheck.
 
 ## AGENTS.md updates (MANDATORY)
 
@@ -44,6 +44,7 @@ Or use `fish start.fish` to do all of the above automatically.
 | `backend/main.py` | FastAPI entrypoint |
 | `backend/game_logic.py` | Gallery pagination and sum quiz generation |
 | `backend/session_manager.py` | In-memory per-browser session store |
+| `backend/sesion.py` | Deep Sesión module: storage, fixed schema, Suma rules, verdict |
 | `backend/config.py` | Loads `config.json` with defaults |
 | `config.json` | Game tuning knobs (sum ranges, TOTAL_IMAGES, gallery settings) |
 | `frontend/` | `index.html`, `galeria.html`, `sum.html`, `css/styles.css` |
@@ -58,7 +59,7 @@ Or use `fish start.fish` to do all of the above automatically.
 - **Audio**: `audio.js` uses Web Audio API (no external files). Auto-starts on quiz load, stops on `beforeunload`.
 - **Gallery**: Shows numbers 1..`GALLERY_CONTINUOUS_MAX` continuously (placeholder if file missing), plus `GALLERY_EXTRAS` (only if file exists on disk). Sorted numerically. Independent of `TOTAL_IMAGES` — does not affect the sum game.
 - **Spanish UI**: All visible strings in Spanish. Keep `game_type` strings in English (`"sum"`; `"count"` is legacy).
-- **No tests, no CI, no formatter** — none configured. Logging via `loguru` (stderr, DEBUG+).
+- **Tests**: `pytest` under `tests/`; run from the repo root with `python -m pytest -q`. No CI, no formatter. Logging via `loguru` (stderr, DEBUG+).
 
 ## Commit best practices (MANDATORY — sourced from Git docs via context7)
 
